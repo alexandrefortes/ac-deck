@@ -1,0 +1,23 @@
+name: Feature proposal
+description: Suggest a focused improvement to the Steam Deck experience.
+title: "[Feature] "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: Explain the task and how the current behavior gets in the way.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed improvement
+      description: Describe the behavior you would find useful.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Examples or alternatives
+      description: Add relevant screens, related issues or a simpler alternative, if useful. Remove private information from attachments.

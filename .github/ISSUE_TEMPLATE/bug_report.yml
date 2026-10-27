@@ -1,0 +1,40 @@
+name: Bug report
+description: Report a reproducible documentation, preview or launcher problem.
+title: "[Bug] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Reviewed source, a community builder and synthetic tests are present. Check the README for release availability; a validated public package is not available yet.
+        Remove API keys, tokens, account details and private paths from attachments.
+  - type: input
+    id: version
+    attributes:
+      label: Affected page or version
+      description: Link the documentation or preview, or identify the exact launcher version/source revision.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Include the smallest sequence that demonstrates the problem.
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected and actual behavior
+      description: Describe what you expected and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Runtime environment, if applicable
+      description: Include SteamOS/Proton versions, installation method and selected content for a runtime issue. Leave blank for a documentation-only report.
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Screenshots or sanitized error output
+      description: Include relevant evidence and say whether it comes from a preview, automated check or real Steam Deck use.

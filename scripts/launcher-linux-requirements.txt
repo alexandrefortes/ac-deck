@@ -1,0 +1,9 @@
+# SDK Linux x86_64 / CPython 3.13.5. Instalar só em ambiente local explícito.
+# Não altera o runtime por inferência. Versões do controlador: ciclo-entrega.json.
+altgraph==0.17.5 --hash=sha256:f3a22400bce1b0c701683820ac4f3b159cd301acab067c51c653e06961600597
+packaging==26.3 --hash=sha256:d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c
+pyinstaller==6.22.3 --hash=sha256:451a4ae14b719365bf1a2f0a99dae7b3463060061c3a394c70d5264cfb439528
+pyinstaller-hooks-contrib==2026.9 --hash=sha256:fb3e67dd64122561724c48ad0366ac9e8c16e638b63bf7d85de03bf3fdbf06c3
+setuptools==84.0.0 --hash=sha256:51a52592b3b99e102b609654876bd65f19f999935166d1352678931132b0c670
+# Leitura de JPEG/PNG. Wheel CPython 3.13 Linux x86_64 (manylinux 2.27/2.28).
+Pillow==12.2.0 --hash=sha256:eedf4b74eda2b5a4b2b2fb4c006d6295df3bf29e459e198c90ea48e130dc75c3

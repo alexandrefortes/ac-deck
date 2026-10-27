@@ -1,0 +1,435 @@
+{
+  "schema_version": 1,
+  "source_commit": "498812dca4d3e21f4c2624b099278402ba3ed854",
+  "source_tree": "working-tree",
+  "scope": "Reviewed source files only; no Git history or private payloads",
+  "first_party_license": "not exported; author decision required",
+  "files": [
+    {
+      "path": "licenses/ACC-DualSense-Feedback.txt",
+      "sha256": "f532e6b8cc70bd16050e6c8dc24d20d497b3a050930622e4cc3a3404be55491b",
+      "size_bytes": 1229,
+      "mode": 420
+    },
+    {
+      "path": "scripts/build_launcher_linux.py",
+      "sha256": "d12c36bbee43cc53a87c3e7e1409432f57972c735671434044d07e2c5edb0b1f",
+      "size_bytes": 29018,
+      "mode": 420
+    },
+    {
+      "path": "scripts/jogo_deck.py",
+      "sha256": "11c4c771128a73c1d3524d28c844f027e4f3b5d5591fcce3055db94eaa06c58f",
+      "size_bytes": 329,
+      "mode": 420
+    },
+    {
+      "path": "scripts/launcher-linux-requirements.txt",
+      "sha256": "df79c81512b7f78f9ce15ab4b6d559b719564e3606bebc3de628a31ee95d209a",
+      "size_bytes": 839,
+      "mode": 420
+    },
+    {
+      "path": "scripts/pratica_deck.py",
+      "sha256": "a842aa825dc9f575a11e3947db460d421885f1df6fdf5976b433e3f5669e2265",
+      "size_bytes": 1557,
+      "mode": 420
+    },
+    {
+      "path": "scripts/render_readme_screenshots.py",
+      "sha256": "bfafb82b269e59c48cb0517ecb37fcb0ac392c3fef0bfd3c49a71bfe16937dd7",
+      "size_bytes": 8942,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/__init__.py",
+      "sha256": "6c21ff2919cdbeaae4913beaa73caf65de9289dc4f8368b832f3a9de1860edf0",
+      "size_bytes": 78,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/ai_activity.py",
+      "sha256": "fc02627449198837bf4e5b122be785e5033f4e337af23c38f0863a9cbf2a09ce",
+      "size_bytes": 2752,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/ai_events.py",
+      "sha256": "304b29fe8bd7f61f9dbd3696357bd9c60be77608c2c4a13086fbab5233af33b6",
+      "size_bytes": 27325,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/ai_preferences.py",
+      "sha256": "e615d732970af9a09a2818b2c26e66d87cea2cfd2bb1b493c609b6df328163e3",
+      "size_bytes": 3129,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/ai_recomposition.py",
+      "sha256": "a6717c6b20c75860cbc7198819f694379fc83ed7856840843543fcda658de87a",
+      "size_bytes": 6017,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/ai_report.py",
+      "sha256": "9c2e5aef7b2303061bfb18ea200fda1812658e12d5b49cd1b919fdb1d0dc2732",
+      "size_bytes": 1817,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/ai_settings_ui.py",
+      "sha256": "327e16462fe678932f27599a1fe6ab57f575d13883962ee8da9b116054af9c09",
+      "size_bytes": 16215,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/ai_usage.py",
+      "sha256": "6967f096785cf6b9cbeef797f64d3002fac2e58350824a8416fc5ea222dac137",
+      "size_bytes": 10885,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/api_credentials.py",
+      "sha256": "42e7fbe553d12de49d4e8918cfab7431d8961b62c0311f0a542a85076cbab857",
+      "size_bytes": 1924,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/application.py",
+      "sha256": "77ed85efcc55634e8f2b9a86f913370760d41fedfacbfebaa5ce60f50ca0b24f",
+      "size_bytes": 32883,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/assists_config.py",
+      "sha256": "5686d713907fb540efa6eb23f0ae6fa0671f8b28d29963ffe6ec287781ab402a",
+      "size_bytes": 5280,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/bacc_camera.py",
+      "sha256": "45a0eb7b0601e86a4b18b564fb6a3a07b4a7417c03a423e354121836648a9a9b",
+      "size_bytes": 7628,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/campaign_ui.py",
+      "sha256": "3913fff0e8af67020f90b047848db2f7558bcb788be9c8c7f5638872ff568c72",
+      "size_bytes": 11515,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/campaigns.py",
+      "sha256": "ad588f0d77e835dfdf0ccc7e2be840ca71e1978adda6fd62bbcd9b62ce9a5cbb",
+      "size_bytes": 15694,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/catalogue.py",
+      "sha256": "7fcb956b65ca4b4f0fa9cb0345bbdcee515ce6b3ee6a45fc6800ddfc1fb6a416",
+      "size_bytes": 7441,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/chase_camera.py",
+      "sha256": "c165247209e560b97ee24d21149c5af56d04dfa349fa9fc6a12023316d5558a4",
+      "size_bytes": 15403,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/comfort.py",
+      "sha256": "5322f2a61fbb86386e94f86a5b7231da8f21b4272b8f2340f53c063ed68ad4f9",
+      "size_bytes": 5120,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/conditions.py",
+      "sha256": "17758554bc352c9281f4358a6ca73a069e22109aa28deca030adf59422f1709c",
+      "size_bytes": 2569,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/content.py",
+      "sha256": "a75e978bfe5add183a91f08cd5532c4089034807a0b0e2bb7e3aa9a395833000",
+      "size_bytes": 17232,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/controls.py",
+      "sha256": "ac0e073abc36dec4754fe284d67d78b1b066b79e58b9491f0efb44515aa348eb",
+      "size_bytes": 4055,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/csp.py",
+      "sha256": "a58109868bbc87f583a97cfe9e8b5eab531bcd05b467a359dbe01c02fdd1f04b",
+      "size_bytes": 30126,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/diagnostics.py",
+      "sha256": "0b48412d12135a9c11b28a220db440f11b1271249fa8e4b707b372cb53cf6448",
+      "size_bytes": 1452,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/dictation.py",
+      "sha256": "1f031df39b602a58551d5dd34a206719ff754458c3f07b7fb6873cd7ad4c568d",
+      "size_bytes": 16075,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/driving_haptics.py",
+      "sha256": "b5b37a733afdba0b7f7fd5ae22f5da736411495d77f53b08aaf3f85b126b2301",
+      "size_bytes": 9847,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/driving_haptics_app.py",
+      "sha256": "27e184011c5bbed729698a3f0457aae137537233004dabcded8d96c93c1ae990",
+      "size_bytes": 6590,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/event_synthetizer.py",
+      "sha256": "4b2f5dc10a64509b011cc458523b5a6d14796f388f3cfa4aa543b9d7a4cccff7",
+      "size_bytes": 16208,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/favorites.py",
+      "sha256": "5962cd36a8eb349c14b28c5f5d243b4151e76bb3575c12d52442a633e86ef532",
+      "size_bytes": 4773,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/file_io.py",
+      "sha256": "55573ec08f958a55cafdb3ff1a4f4fa990633f472d5f1d405194e6e490970451",
+      "size_bytes": 9063,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/finish_capture.py",
+      "sha256": "9b10761222bdf69fd5ffb6f1890e2d5b849649f2d405c9fbea3dd2efa2d938f5",
+      "size_bytes": 12509,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/font_support.py",
+      "sha256": "6c49cc26285012e03de60e211ba40badef8667ecd6f1805164ebc320d2f03f0b",
+      "size_bytes": 9140,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/game_config.py",
+      "sha256": "f8c620b806c29808e373301144b7a200b313f5c00d56b522050f04293c3c6f0c",
+      "size_bytes": 2953,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/graphics.py",
+      "sha256": "9c769b879c270e56f7a8174c26357576a13c8a98c697027d00bcb95483468a4f",
+      "size_bytes": 5198,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/graphics_settings.py",
+      "sha256": "8df87d9877f5dc8636f4091f2180db0fa3769d133adbc7f2dd37bd97c9a05283",
+      "size_bytes": 18958,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/gt5_camera.py",
+      "sha256": "76450d0e867c095038f6f0484657af357503f707af264a7940e3c10ba6452090",
+      "size_bytes": 9527,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/history_records.py",
+      "sha256": "8ed68aba404fa8a806391f9f26d42526d5f0b50c4b5cd089bc80b465badc1bde",
+      "size_bytes": 9791,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/history_retention.py",
+      "sha256": "3bef25871f5a45bb8e9e19d51ed73cce16b6e15c27a2c7c773e92d18d84b3410",
+      "size_bytes": 6777,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/hud_cleanup.py",
+      "sha256": "f20881703d42c38a4bee16c0d177de6017dc529747e87c983d17395320b2e01b",
+      "size_bytes": 1392,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/installed.py",
+      "sha256": "cbba579f7429e4cd500a16249d101f11760607b8fe5cfe8accbcfe0bc4fd7e09",
+      "size_bytes": 7605,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/linear_gamma.py",
+      "sha256": "67ea5c9c483ac4b5cdf04a500e98a59413d0a0d1188f53a51fa925435d109074",
+      "size_bytes": 6535,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/native_menu.py",
+      "sha256": "6793bedbdcb63f39eb694ae33236205499c830cb08a18216e1c8c713b8bac3f6",
+      "size_bytes": 88213,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/one_shot_ui.py",
+      "sha256": "166b5d0acb48461890d87f80f32086ee62e5a2f3af52a46a88b85263454e90e2",
+      "size_bytes": 5469,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/package_setup.py",
+      "sha256": "12b86788d09bf0b01f77883fe8e65348baba7b6881544a8059a0707db8f8fe51",
+      "size_bytes": 8201,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/player_history.py",
+      "sha256": "82ab80ed3f2a192f9437175a5e7b87071bd8c6cb6d20fdfa2438a24e2f7ebd2c",
+      "size_bytes": 1988,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/practice_session.py",
+      "sha256": "bcddfdc26b1040fb1bf976ad26df18261df67ea8278cb5f16f12492a82711615",
+      "size_bytes": 14194,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/previews.py",
+      "sha256": "0f34a8ba726724ced59536e6777372bdb62686664f0ca53d7573ce8a1362662f",
+      "size_bytes": 4707,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/results.py",
+      "sha256": "e52273e10510904a2fb52a7121c57f553cde30bba5f2137af0182eaebf6bdd4a",
+      "size_bytes": 17270,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/rogue.py",
+      "sha256": "32a79829585ffd9787ca7afffbab6ee5dfb8537ec1e8b2fcafa698ff3c1bd075",
+      "size_bytes": 34962,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/rogue_duration.py",
+      "sha256": "e0087e454d8ce60ccf9649dd0ee9e3bc1e5a7141081c21b3c9d21b8c4407cda1",
+      "size_bytes": 5943,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/rogue_generator.py",
+      "sha256": "28f8444a2017e32af9a73f9a7dc0ffdf99da371c50a87273ac33ea9f11a46075",
+      "size_bytes": 15695,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/rogue_result_ui.py",
+      "sha256": "41a5ddc757256a114508d9ab2250100e6aa8874f9b8728a1281bc127c1e84fc0",
+      "size_bytes": 11914,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/rogue_rewards.py",
+      "sha256": "4447170b6827e449f056a4066c99b5a4b777e8a73e331d9f459e478381125dfe",
+      "size_bytes": 12151,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/rogue_rewards_ui.py",
+      "sha256": "53c7bae3d861d2d62ef3ea298359040304a0e67c826eecc0cfecaf47ec82fdc4",
+      "size_bytes": 12441,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/rogue_toasty.py",
+      "sha256": "443009590d2189e1b413cfa07ca052e86996432fee57b2e0ccb37673d5d19d6f",
+      "size_bytes": 7685,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/rogue_toasty_app.py",
+      "sha256": "ed5f0d910541cd28f4e8e1d242ec7dea0a2fb02541581d935420f28e50617941",
+      "size_bytes": 8719,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/rogue_toasty_assets.py",
+      "sha256": "2a3accfd7e8a8181e01a11e7ed8b82ff75512a63a6840b54465699d52e419a46",
+      "size_bytes": 2816,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/rogue_toasty_install.py",
+      "sha256": "131c8c9b33c7cc5362833562698ee950ee7f332b08fbc864136d83ee1465d3af",
+      "size_bytes": 12330,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/rogue_toasty_session.py",
+      "sha256": "0fa004c61bb2fb908d65d94090bec6f22a96d03865f47afa51d215e1c61c3a0e",
+      "size_bytes": 11550,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/rogue_ui.py",
+      "sha256": "9c6ec868c56e017a33d07e5e8b80f1cd032ed3060cf77ce690e8a178a86b1cb4",
+      "size_bytes": 17521,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/semantic_catalogue.py",
+      "sha256": "4cbeba95f06f755c8e742de42c90b0447d9e76fb7fc0eced2d90bf4c3d597078",
+      "size_bytes": 4990,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/session_process.py",
+      "sha256": "5e23f38337523d67e9211ecd8d23a34206ae14798e1878bbe12831bec6581eeb",
+      "size_bytes": 6742,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/session_prompt.py",
+      "sha256": "b636bce2a1d321044a46292491236ec63b893c864eb42cbd762657b2ca10bb01",
+      "size_bytes": 12966,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/session_settings.py",
+      "sha256": "739a4b94882c8f4100366c99d860c22d3f22ab14efcf2db817893ffb4ef9d479",
+      "size_bytes": 1236,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/steam.py",
+      "sha256": "56616bdb0e1a758ba8b959b00c176cdb07bef860d28162b747f534981dc78a42",
+      "size_bytes": 2750,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/ui_render.py",
+      "sha256": "8beb4570e35812778b949f76616b0fc4287c34d2a9e086f8889b294f7bfcc293",
+      "size_bytes": 39643,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/window.py",
+      "sha256": "56cbb7d8b65c619aa87a2f3fe181e83cb74eb55008c40414c04d82409e5e8736",
+      "size_bytes": 91612,
+      "mode": 420
+    }
+  ]
+}
