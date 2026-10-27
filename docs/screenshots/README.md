@@ -7,8 +7,9 @@ no game files, player data, album artwork or Toasty media.
 
 The previews show interface composition; they do not show races or establish
 Steam Deck performance. No game, window, microphone or paid API was started
-to create them. The rebranded application still needs its matching packaged
-build and validation before a community release.
+to create them. A matching community candidate has been built and validated
+locally. Public source/package release awaits the first-party license decision;
+physical Steam Deck validation remains separate.
 
 | Screen | 1280 × 800 | 1920 × 1200 |
 | --- | --- | --- |
