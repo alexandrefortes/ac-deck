@@ -33,6 +33,9 @@ The launcher uses the original simulator through Steam/Proton. Cars, tracks and 
 
 [Capture provenance and image manifest](docs/screenshots/README.md).
 
+Community builds use native graphics profiles by default. CSP-related controls
+shown in the previews require a separately supplied CSP kit; CSP is not bundled.
+
 ## Requirements
 
 - Steam Deck running SteamOS/Linux.
@@ -51,6 +54,9 @@ For development, use Python **3.13.5** and the [hash-pinned dependencies](script
 ```sh
 python -B -m unittest discover -s tests -v
 ```
+
+A local candidate has passed the [documented build checks](docs/build-validation.md).
+First-party licensing and public release publication are still pending.
 
 The [source build guide](docs/installation.md#building-from-source) documents the real `--community` builder and its explicit native-library, font and license inputs.
 

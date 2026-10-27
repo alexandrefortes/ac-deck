@@ -1,0 +1,32 @@
+# Community candidate validation
+
+The local candidate community-preview-002 was built from source revision
+27a9bf1cb05904490f36481ee491d9b6ef88ccae. Its reviewed source export is recorded
+in [the public source manifest](../public-source-manifest.json).
+This is a prepared candidate, not a published public release.
+
+| Check | Result |
+| --- | --- |
+| Public source tests | 62 passed, no failures or skips |
+| Compiled runtime tests | 62 passed, no runtime source fallback |
+| Informational CLI | Help passed from an unrelated directory, cold and warm |
+| Relocation | Passed with spaces in the folder name |
+| Installed-game attachment | Passed using authored temporary fixtures; no game was started or copied |
+| UI composition | Five screens rendered at 1280 × 800 and 1920 × 1200 |
+| Distribution inventory | 166 files; no bundled CSP, mods, private media, game or player data |
+| Runtime compatibility | Linux x86_64, highest required GLIBC symbol 2.39 |
+| SDK notices | 50 exact notice files, with selected-library copyright and referenced license texts |
+
+SDK: Python 3.13.5, PyInstaller 6.22.3, hooks 2026.9 and Pillow 12.2.0.
+The archive SHA-256 is
+8db2adab138b28fee5013d78a09b4f5662706870998bc8b37bd1cfe8e2cfd7a3.
+
+Completing notices did not change the executable or shared libraries. Standard
+library ZIP entries also remained identical; only ZIP container metadata changed.
+The final inventory, source hashes, notices and CLI were verified again.
+
+No Steam, launcher window, race, physical microphone or paid API was opened.
+These checks do not establish physical Steam Deck behavior, minimum FPS,
+offline operation or complete game-data portability. First-party licensing,
+public release publication and hardware validation remain separate prerequisites
+in the [release checklist](community-release-checklist.md).

@@ -17,6 +17,7 @@ license notices under licenses/. Review the exact package inventory:
 | DejaVu UI font | licenses/sdk/ |
 | Pillow | licenses/Pillow-LICENSE |
 | PyInstaller | licenses/PyInstaller.txt |
+| Other selected ELF dependencies and referenced common license texts | licenses/sdk/ |
 
 Keep original notice bytes. An optional component installed by a player keeps
 its own license; its presence on that player's machine does not add it to the
