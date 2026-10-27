@@ -1,6 +1,6 @@
 # Community release checklist
 
-The prepared repository includes a reviewed source export, community builder, synthetic tests and interface previews. Publication, first-party licensing and a validated public package remain pending. Complete the following before presenting a package as a supported public release.
+The local prepared repository includes a reviewed source export, community builder, synthetic tests and a validated community candidate. Documentation and interface previews are already published; public source/package release awaits first-party licensing. Complete the following before presenting a package as a supported public release.
 
 - [ ] Define the canonical source repository, this repository's role and how documentation, source exports and release versions stay in sync.
 - [ ] Review any source export and its history for private data and material outside the approved public scope.

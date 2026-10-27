@@ -1,6 +1,6 @@
 # Contributing to ac-deck
 
-ac-deck contains a reviewed launcher source export, a community builder, synthetic tests and interface previews. These files are prepared locally; publication, the first-party license decision and a validated public package remain pending.
+This local source tree contains a reviewed launcher export, a community builder, synthetic tests and interface previews. Documentation and images are published on the public `main` branch. Public source/package release awaits the first-party license decision.
 
 ## Useful contributions now
 

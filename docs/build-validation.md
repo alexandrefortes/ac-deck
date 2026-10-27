@@ -3,7 +3,13 @@
 The local candidate community-preview-002 was built from source revision
 27a9bf1cb05904490f36481ee491d9b6ef88ccae. Its reviewed source export is recorded
 in [the public source manifest](../public-source-manifest.json).
-This is a prepared candidate, not a published public release.
+That manifest identifies the private source origin as
+498812dca4d3e21f4c2624b099278402ba3ed854; 27a9bf1 is the independent exported
+repository revision used to compile the candidate. The recorded source hashes
+match both trees.
+This is a prepared local candidate. The presentation and interface gallery are
+published on the public `main` branch; the source and package remain local
+pending the first-party license decision.
 
 | Check | Result |
 | --- | --- |

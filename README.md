@@ -2,7 +2,7 @@
 
 A controller-friendly launcher for the original Assetto Corsa on Steam Deck.
 
-**Source preview:** reviewed launcher source, a community builder and synthetic tests are present in this tree. Publication and the project-owned code license decision are pending. A validated public installer or downloadable release is not available yet.
+**Prepared source tree:** reviewed launcher source, a community builder and synthetic tests are present locally. The public `main` branch contains the published presentation and interface gallery. Public release of the source and package awaits the project-owned code license decision; no public installer is available yet.
 
 [![Drive screen showing demonstration cars, tracks and race settings](docs/screenshots/ac-deck-drive-1280x800.png)](docs/screenshots/ac-deck-drive-1920x1200.png)
 
@@ -56,7 +56,7 @@ python -B -m unittest discover -s tests -v
 ```
 
 A local candidate has passed the [documented build checks](docs/build-validation.md).
-First-party licensing and public release publication are still pending.
+First-party licensing and public source/package release are still pending.
 
 The [source build guide](docs/installation.md#building-from-source) documents the real `--community` builder and its explicit native-library, font and license inputs.
 
