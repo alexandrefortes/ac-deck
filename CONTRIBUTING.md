@@ -1,6 +1,6 @@
 # Contributing to ac-deck
 
-This local source tree contains a reviewed launcher export, a community builder, synthetic tests and interface previews. Documentation and images are published on the public `main` branch. Public source/package release awaits the first-party license decision.
+Source is available in this repository under [PolyForm Noncommercial 1.0.0](LICENSE), with a reviewed launcher export, community builder, synthetic tests and interface previews. A runtime package is not published while bundled-library LGPL review remains pending. Physical Steam Deck validation has not yet been performed.
 
 ## Useful contributions now
 
@@ -50,10 +50,12 @@ For code changes:
 
 ## Licensing and third-party material
 
-Project-owned code licensing is still being finalized. Check the repository's recorded licensing before reusing code or submitting material under license terms.
+Project-owned code uses [PolyForm Noncommercial License 1.0.0](LICENSE), a source-available license with purpose restrictions. The full license defines permitted noncommercial purposes and specified personal uses without anticipated commercial application. It also permits use by charitable organizations, educational institutions, public research organizations, public safety or health organizations, environmental protection organizations and government institutions regardless of funding source or obligations resulting from that funding. Fair-use rights remain unaffected. Preserve the license terms and any required notices when distributing covered material.
 
 Contributions must identify their provenance and applicable permissions. Game/DLC files, Steam data, CSP archives, credentials, private session records and unreviewed third-party mod/media payloads are outside the public distribution. Software licenses do not automatically grant rights to unrelated images or audio.
 
+Dependencies keep their own licenses; PolyForm does not replace them. Before distributing a compiled candidate, complete the [bundled-library review](THIRD_PARTY_NOTICES.md#binary-distribution-review), including the applicable LGPL requirements.
+
 ## Public release review
 
-Source, package, documentation and screenshots must pass an explicit review before a public release is marked verified. Follow the [community release checklist](docs/community-release-checklist.md). Source tests, simulated builds and screenshots do not establish physical Steam Deck support.
+Source, package, documentation and screenshots have separate review and publication states. Follow the [community release checklist](docs/community-release-checklist.md). The source license is selected; a binary release remains unavailable pending LGPL compliance review; physical Steam Deck validation remains separate. Source tests, simulated builds and screenshots do not establish physical Steam Deck support.

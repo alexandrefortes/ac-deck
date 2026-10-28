@@ -3,7 +3,7 @@
   "source_commit": "498812dca4d3e21f4c2624b099278402ba3ed854",
   "source_tree": "working-tree",
   "scope": "Reviewed source files only; no Git history or private payloads",
-  "first_party_license": "not exported; author decision required",
+  "first_party_license": "not managed by export; see destination LICENSE",
   "files": [
     {
       "path": "licenses/ACC-DualSense-Feedback.txt",

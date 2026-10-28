@@ -7,9 +7,12 @@ That manifest identifies the private source origin as
 498812dca4d3e21f4c2624b099278402ba3ed854; 27a9bf1 is the independent exported
 repository revision used to compile the candidate. The recorded source hashes
 match both trees.
-This is a prepared local candidate. The presentation and interface gallery are
-published on the public `main` branch; the source and package remain local
-pending the first-party license decision.
+Source is available in this repository under [PolyForm Noncommercial
+1.0.0](../LICENSE). This report records a prepared local candidate, not a
+published runtime package. Binary publication remains pending the
+[bundled-library LGPL compliance review](../THIRD_PARTY_NOTICES.md#binary-distribution-review)
+while physical Steam Deck validation remains separate. The archive hash below identifies this
+local candidate and is not a public download announcement.
 
 | Check | Result |
 | --- | --- |
@@ -33,6 +36,7 @@ The final inventory, source hashes, notices and CLI were verified again.
 
 No Steam, launcher window, race, physical microphone or paid API was opened.
 These checks do not establish physical Steam Deck behavior, minimum FPS,
-offline operation or complete game-data portability. First-party licensing,
-public release publication and hardware validation remain separate prerequisites
-in the [release checklist](community-release-checklist.md).
+offline operation or complete game-data portability. The first-party license
+choice is resolved; the dependencies retain their own terms. LGPL compliance
+review, package publication and hardware validation remain separate steps in
+the [release checklist](community-release-checklist.md).

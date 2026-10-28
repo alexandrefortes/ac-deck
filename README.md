@@ -2,7 +2,7 @@
 
 A controller-friendly launcher for the original Assetto Corsa on Steam Deck.
 
-**Prepared source tree:** reviewed launcher source, a community builder and synthetic tests are present locally. The public `main` branch contains the published presentation and interface gallery. Public release of the source and package awaits the project-owned code license decision; no public installer is available yet.
+**Source-available:** source is available in this repository under [PolyForm Noncommercial 1.0.0](LICENSE), alongside the community builder, synthetic tests and interface previews. A runtime package is not published: review of bundled LGPL components remains pending. Physical Steam Deck validation has not yet been performed.
 
 [![Drive screen showing demonstration cars, tracks and race settings](docs/screenshots/ac-deck-drive-1280x800.png)](docs/screenshots/ac-deck-drive-1920x1200.png)
 
@@ -43,6 +43,8 @@ shown in the previews require a separately supplied CSP kit; CSP is not bundled.
 - The game installed and working with the player's Steam/Proton setup.
 - Optional AI generation and dictation require their configured services, network access and API credentials.
 
+The candidate targets Linux x86_64 and requires GLIBC 2.39. Python 3.13.5 is a source-build requirement; the compiled candidate includes its Python runtime. No public SteamOS/Proton compatibility matrix has been validated yet.
+
 ## Installation and updates
 
 Start with the [installation guide and current availability](docs/installation.md). See [updates and recovery](docs/update-and-recovery.md) for data preservation and [troubleshooting](docs/troubleshooting.md) for reporting a problem.
@@ -56,9 +58,15 @@ python -B -m unittest discover -s tests -v
 ```
 
 A local candidate has passed the [documented build checks](docs/build-validation.md).
-First-party licensing and public source/package release are still pending.
+Binary distribution remains unavailable pending LGPL compliance review. Physical Steam Deck validation remains separate.
 
 The [source build guide](docs/installation.md#building-from-source) documents the real `--community` builder and its explicit native-library, font and license inputs.
+
+## License
+
+Project-owned code is licensed under [PolyForm Noncommercial License 1.0.0](LICENSE). This is a source-available license with purpose restrictions. It permits noncommercial purposes and the specified personal uses without an anticipated commercial application. It also permits use by charitable organizations, educational institutions, public research organizations, public safety or health organizations, environmental protection organizations and government institutions, regardless of their funding source or obligations resulting from that funding. Fair-use rights remain unaffected.
+
+Read the full license for the exact permissions, conditions and required notices. Third-party components retain their own terms; see [third-party notices](THIRD_PARTY_NOTICES.md).
 
 ## Follow and contribute
 
@@ -66,4 +74,4 @@ Follow [this repository](https://github.com/alexandrefortes/ac-deck) for documen
 
 For a bug report, include the version, SteamOS/Proton versions, steps to reproduce, expected result and actual result. Remove API keys, account details and private paths from screenshots and logs.
 
-Read [CONTRIBUTING](CONTRIBUTING.md) for source checks and contribution scope, and [third-party notices](THIRD_PARTY_NOTICES.md) for dependency attribution. Project licensing and public release validation remain part of the release checklist.
+Read [CONTRIBUTING](CONTRIBUTING.md) for source checks and contribution scope. Package licensing compliance and physical validation remain part of the release checklist.

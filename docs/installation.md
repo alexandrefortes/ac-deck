@@ -1,6 +1,6 @@
 # Installation and availability
 
-Reviewed source, a community builder and synthetic tests are present in this prepared repository. Publication, the first-party license decision and a validated public installer or downloadable runtime release remain pending. You can inspect and test the source using the commands below.
+Source is available in this repository under [PolyForm Noncommercial 1.0.0](../LICENSE), with the community builder and synthetic tests. A public installer or downloadable runtime package is not available while bundled-library LGPL review remains pending. Physical Steam Deck validation has not yet been performed. You can inspect and test the source using the commands below.
 
 ## What the project provides
 
@@ -15,13 +15,15 @@ Game/DLC files, Steam account data, CSP archives and third-party mod/media paylo
 - A working game installation using the player's normal Steam/Proton setup.
 - Enough free storage for the reviewed package and any backup required during installation or updates. Package size and supported versions will be listed with a release.
 
+The local candidate targets Linux x86_64 with GLIBC 2.39 as its highest required symbol version. Its Python runtime is bundled; Python 3.13.5 is required when compiling from source. This candidate result does not establish compatibility with an untested SteamOS/Proton combination.
+
 AI generation and dictation are optional. They require their configured services, network access and API credentials; provider accounts and charges are separate from the launcher. Manual race configuration does not require AI.
 
 No public compatibility matrix is validated yet. A future release must identify the SteamOS, Proton and launcher versions that were actually tested.
 
 ## Installing a reviewed release
 
-The release must provide the exact download location, checksum, extraction layout and supported Steam launch entry. Those instructions are not available at this preview stage.
+No runtime package has been published. A release must provide the exact download location, checksum, extraction layout and supported Steam launch entry after its LGPL compliance review, with physical validation reported separately. Those instructions are not available at this source-preview stage.
 
 The supported installation flow must cover:
 
@@ -35,7 +37,7 @@ The exact commands will be added after the public candidate passes [release revi
 
 ## Building from source
 
-The real entrypoint is [`scripts/build_launcher_linux.py`](../scripts/build_launcher_linux.py). Use its `--community` profile on **Linux x86_64**, with **CPython 3.13.5** and the [hash-pinned Python dependencies](../scripts/launcher-linux-requirements.txt). Check the project-owned code's pending licensing status before redistributing a build.
+The real entrypoint is [`scripts/build_launcher_linux.py`](../scripts/build_launcher_linux.py). Use its `--community` profile on **Linux x86_64**, with **CPython 3.13.5** and the [hash-pinned Python dependencies](../scripts/launcher-linux-requirements.txt). Project-owned code is subject to [PolyForm Noncommercial 1.0.0](../LICENSE), including its expressly permitted personal and organizational uses. Third-party libraries retain their own terms; a local build does not by itself establish that a combined binary distribution meets those terms.
 
 From the repository root, create an explicit local environment using your Python 3.13.5 interpreter:
 
@@ -75,7 +77,7 @@ You can check the candidate's informational CLI without opening the launcher win
 local/work/community-local-01/ac-deck-linux-x86_64/ac-deck --help
 ```
 
-A successful compilation produces a local candidate, not a published release or proof of Steam Deck compatibility. Record its source hashes, native inputs, notices, CLI/resource checks and actual platform observations as part of [release review](community-release-checklist.md).
+A successful compilation produces a local candidate, not a published release or proof of Steam Deck compatibility. Binary publication remains pending the [LGPL compliance review](../THIRD_PARTY_NOTICES.md#binary-distribution-review) while physical Steam Deck validation remains separate. Record source hashes, native inputs, notices, CLI/resource checks and actual platform observations as part of [release review](community-release-checklist.md).
 
 ## What counts as verified
 
