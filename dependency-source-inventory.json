@@ -1,0 +1,357 @@
+{
+  "schema_version": 1,
+  "created_utc": "2026-10-28T20:30:11.827158+00:00",
+  "purpose": "Corresponding-source companion for the exact listed bundled LGPL libraries",
+  "reference_distribution": "ac-deck community-preview-002",
+  "reference_source_commit": "27a9bf1cb05904490f36481ee491d9b6ef88ccae",
+  "reference_runtime_archive_sha256": "8db2adab138b28fee5013d78a09b4f5662706870998bc8b37bd1cfe8e2cfd7a3",
+  "license_scope": "Third-party sources retain their own licenses; no first-party license is applied to them.",
+  "packages": [
+    {
+      "source_package": "alsa-lib",
+      "source_version": "1.2.14-1+deb13u1",
+      "source_pool_url": "https://deb.debian.org/debian/pool/main/a/alsa-lib/",
+      "binary_package": "libasound2t64",
+      "binary_version": "1.2.14-1+deb13u1",
+      "bundled_library_licenses": "LGPL-2.1-or-later",
+      "bundled_libraries": [
+        {
+          "path": "_internal/libasound.so.2",
+          "sha256": "0faa79c7a37189b9efcd9bff5874cd1af1c05b0cc66831733087d84cbe87e811",
+          "size_bytes": 1178192
+        }
+      ],
+      "copyright_notice": {
+        "path": "licenses/alsa-lib-copyright.txt",
+        "sha256": "28615d5f059d212259b6a82f6326daf8753349df8dfbdcd108310460ed2ec04f",
+        "size_bytes": 1591
+      },
+      "files": [
+        {
+          "path": "packages/alsa-lib/alsa-lib_1.2.14-1+deb13u1.dsc",
+          "url": "https://deb.debian.org/debian/pool/main/a/alsa-lib/alsa-lib_1.2.14-1+deb13u1.dsc",
+          "sha256": "45f15d45b0329394de2e59c85052d0ac084e4e0ac215346ac5299a09432f515e",
+          "size_bytes": 2951,
+          "role": "Debian source descriptor"
+        },
+        {
+          "path": "packages/alsa-lib/alsa-lib_1.2.14.orig.tar.bz2",
+          "url": "https://deb.debian.org/debian/pool/main/a/alsa-lib/alsa-lib_1.2.14.orig.tar.bz2",
+          "sha256": "be9c88a0b3604367dd74167a2b754a35e142f670292ae47a2fdef27a2ee97a32",
+          "size_bytes": 1115517,
+          "role": "Original file declared in the Debian DSC SHA-256 table"
+        },
+        {
+          "path": "packages/alsa-lib/alsa-lib_1.2.14.orig.tar.bz2.asc",
+          "url": "https://deb.debian.org/debian/pool/main/a/alsa-lib/alsa-lib_1.2.14.orig.tar.bz2.asc",
+          "sha256": "d4d73561754d9e0956a77aa5edf9c7120f80129bda6832257d98c2010915b3e8",
+          "size_bytes": 833,
+          "role": "Original file declared in the Debian DSC SHA-256 table"
+        },
+        {
+          "path": "packages/alsa-lib/alsa-lib_1.2.14-1+deb13u1.debian.tar.xz",
+          "url": "https://deb.debian.org/debian/pool/main/a/alsa-lib/alsa-lib_1.2.14-1+deb13u1.debian.tar.xz",
+          "sha256": "8c04f2d76c4566f21d044ea52eed39d97bdbf5a5a9cb21582662dd76f2dad38e",
+          "size_bytes": 34100,
+          "role": "Original file declared in the Debian DSC SHA-256 table"
+        }
+      ],
+      "descriptor_verification": "HTTPS from Debian; retained clear-signed descriptor; all declared file sizes and SHA-256 values verified. Uploader OpenPGP signature was not independently verified."
+    },
+    {
+      "source_package": "libasyncns",
+      "source_version": "0.8-6",
+      "source_pool_url": "https://deb.debian.org/debian/pool/main/liba/libasyncns/",
+      "binary_package": "libasyncns0",
+      "binary_version": "0.8-6+b5",
+      "bundled_library_licenses": "LGPL-2.1-or-later",
+      "bundled_libraries": [
+        {
+          "path": "_internal/libasyncns.so.0",
+          "sha256": "03429d16fdb490790adb62a0140573111ff8ce2f2e17937a25b93096e8570051",
+          "size_bytes": 22368
+        }
+      ],
+      "copyright_notice": {
+        "path": "licenses/libasyncns-copyright.txt",
+        "sha256": "26f98be71539b8f1038fbaf51551598d0e2eb16f98db9a62094fc85db5f1c25d",
+        "size_bytes": 1368
+      },
+      "files": [
+        {
+          "path": "packages/libasyncns/libasyncns_0.8-6.dsc",
+          "url": "https://deb.debian.org/debian/pool/main/liba/libasyncns/libasyncns_0.8-6.dsc",
+          "sha256": "d6a3cccafadceda0bd1542c6325c6238ec34a8ff85276d6f2e5914e282c67dc6",
+          "size_bytes": 1921,
+          "role": "Debian source descriptor"
+        },
+        {
+          "path": "packages/libasyncns/libasyncns_0.8.orig.tar.gz",
+          "url": "https://deb.debian.org/debian/pool/main/liba/libasyncns/libasyncns_0.8.orig.tar.gz",
+          "sha256": "4f1a66e746cbe54ff3c2fbada5843df4fbbbe7481d80be003e8d11161935ab74",
+          "size_bytes": 341591,
+          "role": "Original file declared in the Debian DSC SHA-256 table"
+        },
+        {
+          "path": "packages/libasyncns/libasyncns_0.8-6.debian.tar.xz",
+          "url": "https://deb.debian.org/debian/pool/main/liba/libasyncns/libasyncns_0.8-6.debian.tar.xz",
+          "sha256": "69b23a155b8a3da3bf68b1e440283e117c55e92bd3b4aa308605fe3f1164485e",
+          "size_bytes": 4564,
+          "role": "Original file declared in the Debian DSC SHA-256 table"
+        }
+      ],
+      "descriptor_verification": "HTTPS from Debian; retained clear-signed descriptor; all declared file sizes and SHA-256 values verified. Uploader OpenPGP signature was not independently verified."
+    },
+    {
+      "source_package": "lame",
+      "source_version": "3.100-6",
+      "source_pool_url": "https://deb.debian.org/debian/pool/main/l/lame/",
+      "binary_package": "libmp3lame0",
+      "binary_version": "3.100-6+b3",
+      "bundled_library_licenses": "LGPL-2.0-or-later; portions LGPL-2.1-or-later",
+      "bundled_libraries": [
+        {
+          "path": "_internal/libmp3lame.so.0",
+          "sha256": "98d0d7579c760053242a1deac2ebe335b8f8636f44235580f05b732f5fa207bb",
+          "size_bytes": 305128
+        }
+      ],
+      "copyright_notice": {
+        "path": "licenses/lame-copyright.txt",
+        "sha256": "f0e4c5098ffedad31473eec38810c26409223858fb8d63dd7685bf225f96bc5d",
+        "size_bytes": 7026
+      },
+      "files": [
+        {
+          "path": "packages/lame/lame_3.100-6.dsc",
+          "url": "https://deb.debian.org/debian/pool/main/l/lame/lame_3.100-6.dsc",
+          "sha256": "6a402771625fa80785a2b904697ba9c7e74a1ee4fa536354e9e88f08e2a4073b",
+          "size_bytes": 2168,
+          "role": "Debian source descriptor"
+        },
+        {
+          "path": "packages/lame/lame_3.100.orig.tar.gz",
+          "url": "https://deb.debian.org/debian/pool/main/l/lame/lame_3.100.orig.tar.gz",
+          "sha256": "ddfe36cab873794038ae2c1210557ad34857a4b6bdc515785d1da9e175b1da1e",
+          "size_bytes": 1524133,
+          "role": "Original file declared in the Debian DSC SHA-256 table"
+        },
+        {
+          "path": "packages/lame/lame_3.100-6.debian.tar.xz",
+          "url": "https://deb.debian.org/debian/pool/main/l/lame/lame_3.100-6.debian.tar.xz",
+          "sha256": "35c6af528d139737c8beede450ad99fe0c1f1764455d23321038b5c4a2b4574c",
+          "size_bytes": 13320,
+          "role": "Original file declared in the Debian DSC SHA-256 table"
+        }
+      ],
+      "descriptor_verification": "HTTPS from Debian; retained clear-signed descriptor; all declared file sizes and SHA-256 values verified. Uploader OpenPGP signature was not independently verified."
+    },
+    {
+      "source_package": "mpg123",
+      "source_version": "1.32.10-1+deb13u1",
+      "source_pool_url": "https://deb.debian.org/debian/pool/main/m/mpg123/",
+      "binary_package": "libmpg123-0t64",
+      "binary_version": "1.32.10-1+deb13u1",
+      "bundled_library_licenses": "LGPL-2.1-only",
+      "bundled_libraries": [
+        {
+          "path": "_internal/libmpg123.so.0",
+          "sha256": "b5963c5d72f19d4c86010150277a9630a13ce784b4f8af27659b66b69b25b3b8",
+          "size_bytes": 381112
+        }
+      ],
+      "copyright_notice": {
+        "path": "licenses/mpg123-copyright.txt",
+        "sha256": "ba3657ec83ab9af9070bacccc6c9735d1856c8a5adab275708ba3d4c9e41b5f8",
+        "size_bytes": 1492
+      },
+      "files": [
+        {
+          "path": "packages/mpg123/mpg123_1.32.10-1+deb13u1.dsc",
+          "url": "https://deb.debian.org/debian/pool/main/m/mpg123/mpg123_1.32.10-1+deb13u1.dsc",
+          "sha256": "1459a19e4c8cc7df81a6499a37eaf85041fb34af3267a5a73a4160766a71b75c",
+          "size_bytes": 1917,
+          "role": "Debian source descriptor"
+        },
+        {
+          "path": "packages/mpg123/mpg123_1.32.10.orig.tar.xz",
+          "url": "https://deb.debian.org/debian/pool/main/m/mpg123/mpg123_1.32.10.orig.tar.xz",
+          "sha256": "98867a796fa1eeb161847d211734d585ff61c56712fbc333de416fea7b59de29",
+          "size_bytes": 930140,
+          "role": "Original file declared in the Debian DSC SHA-256 table"
+        },
+        {
+          "path": "packages/mpg123/mpg123_1.32.10-1+deb13u1.debian.tar.xz",
+          "url": "https://deb.debian.org/debian/pool/main/m/mpg123/mpg123_1.32.10-1+deb13u1.debian.tar.xz",
+          "sha256": "cba7a4fd6b2f73b99abaf85eeee96964b31b9695aeed77e6b8e8e50e219ef19f",
+          "size_bytes": 28336,
+          "role": "Original file declared in the Debian DSC SHA-256 table"
+        }
+      ],
+      "descriptor_verification": "HTTPS from Debian; retained clear-signed descriptor; all declared file sizes and SHA-256 values verified. Uploader OpenPGP signature was not independently verified."
+    },
+    {
+      "source_package": "pulseaudio",
+      "source_version": "17.0+dfsg1-2",
+      "source_pool_url": "https://deb.debian.org/debian/pool/main/p/pulseaudio/",
+      "binary_package": "libpulse0",
+      "binary_version": "17.0+dfsg1-2+b1",
+      "bundled_library_licenses": "LGPL-2.1-or-later",
+      "bundled_libraries": [
+        {
+          "path": "_internal/libpulse.so.0",
+          "sha256": "2bce57f25d08141a071c348021f5f3c94bc0fdcf644b3dd22a592d6f303ce8fa",
+          "size_bytes": 343088
+        },
+        {
+          "path": "_internal/libpulsecommon-17.0.so",
+          "sha256": "916b99b9bf3d354bdffa0aedc26480655d1ecf697e0d481ef02dc7ba5039024f",
+          "size_bytes": 551112
+        }
+      ],
+      "copyright_notice": {
+        "path": "licenses/pulseaudio-copyright.txt",
+        "sha256": "aff3f1d729168de06e34d940dc493cc305a6e4a6278f1ac38ee52ec0f69e342c",
+        "size_bytes": 21813
+      },
+      "files": [
+        {
+          "path": "packages/pulseaudio/pulseaudio_17.0+dfsg1-2.dsc",
+          "url": "https://deb.debian.org/debian/pool/main/p/pulseaudio/pulseaudio_17.0+dfsg1-2.dsc",
+          "sha256": "f3aa32ade32bf1b3bbd650ebb2ab368f1cef9300636af3b2130db3c8adb9eaca",
+          "size_bytes": 3774,
+          "role": "Debian source descriptor"
+        },
+        {
+          "path": "packages/pulseaudio/pulseaudio_17.0+dfsg1.orig.tar.xz",
+          "url": "https://deb.debian.org/debian/pool/main/p/pulseaudio/pulseaudio_17.0+dfsg1.orig.tar.xz",
+          "sha256": "24a25d3cf8fcede801f6b3d05ca6d22b0a43ad2f710a4fbf2ec251debc9cff5b",
+          "size_bytes": 1459260,
+          "role": "Original file declared in the Debian DSC SHA-256 table"
+        },
+        {
+          "path": "packages/pulseaudio/pulseaudio_17.0+dfsg1-2.debian.tar.xz",
+          "url": "https://deb.debian.org/debian/pool/main/p/pulseaudio/pulseaudio_17.0+dfsg1-2.debian.tar.xz",
+          "sha256": "011e00b40902c9401eaf5c61921e2738c1782e7959581526cd701a74bfb6ba92",
+          "size_bytes": 41188,
+          "role": "Original file declared in the Debian DSC SHA-256 table"
+        }
+      ],
+      "descriptor_verification": "HTTPS from Debian; retained clear-signed descriptor; all declared file sizes and SHA-256 values verified. Uploader OpenPGP signature was not independently verified."
+    },
+    {
+      "source_package": "libsndfile",
+      "source_version": "1.2.2-2+deb13u1",
+      "source_pool_url": "https://deb.debian.org/debian/pool/main/libs/libsndfile/",
+      "binary_package": "libsndfile1",
+      "binary_version": "1.2.2-2+deb13u1",
+      "bundled_library_licenses": "LGPL-2.1-or-later; file-specific notices also apply",
+      "bundled_libraries": [
+        {
+          "path": "_internal/libsndfile.so.1",
+          "sha256": "643e4862f5847d6e5ecb442222d93735a6d4190283df26d4b63d104141a9a056",
+          "size_bytes": 574640
+        }
+      ],
+      "copyright_notice": {
+        "path": "licenses/libsndfile-copyright.txt",
+        "sha256": "66706015979e7ecb0ddfd155c00c5f70d0b69a5f7aa78481ee8ce31e3bf2139a",
+        "size_bytes": 15460
+      },
+      "files": [
+        {
+          "path": "packages/libsndfile/libsndfile_1.2.2-2+deb13u1.dsc",
+          "url": "https://deb.debian.org/debian/pool/main/libs/libsndfile/libsndfile_1.2.2-2+deb13u1.dsc",
+          "sha256": "17e76a64e2dc4d53955cb0729d505ac2d77fab7f139f796d08b858becd88e572",
+          "size_bytes": 2488,
+          "role": "Debian source descriptor"
+        },
+        {
+          "path": "packages/libsndfile/libsndfile_1.2.2.orig.tar.gz",
+          "url": "https://deb.debian.org/debian/pool/main/libs/libsndfile/libsndfile_1.2.2.orig.tar.gz",
+          "sha256": "ffe12ef8add3eaca876f04087734e6e8e029350082f3251f565fa9da55b52121",
+          "size_bytes": 684875,
+          "role": "Original file declared in the Debian DSC SHA-256 table"
+        },
+        {
+          "path": "packages/libsndfile/libsndfile_1.2.2-2+deb13u1.debian.tar.xz",
+          "url": "https://deb.debian.org/debian/pool/main/libs/libsndfile/libsndfile_1.2.2-2+deb13u1.debian.tar.xz",
+          "sha256": "2549d7a791ca177213918fbcf9c9e39c5734a2e18782341b44d71e4b39365296",
+          "size_bytes": 29472,
+          "role": "Original file declared in the Debian DSC SHA-256 table"
+        }
+      ],
+      "descriptor_verification": "HTTPS from Debian; retained clear-signed descriptor; all declared file sizes and SHA-256 values verified. Uploader OpenPGP signature was not independently verified."
+    },
+    {
+      "source_package": "systemd",
+      "source_version": "257.13-1~deb13u1",
+      "source_pool_url": "https://deb.debian.org/debian/pool/main/s/systemd/",
+      "binary_package": "libsystemd0",
+      "binary_version": "257.13-1~deb13u1",
+      "bundled_library_licenses": "LGPL-2.1-or-later; file-specific notices also apply",
+      "bundled_libraries": [
+        {
+          "path": "_internal/libsystemd.so.0",
+          "sha256": "c59f9015342de9c2dcb2decccb3d83218849fe3e4388c723a6528254fd7606f0",
+          "size_bytes": 1131784
+        }
+      ],
+      "copyright_notice": {
+        "path": "licenses/systemd-copyright.txt",
+        "sha256": "a79e4b379cabbd960bb44f6cc1a069081a3778c59a25ee529b68df5a2cb7d27d",
+        "size_bytes": 12521
+      },
+      "files": [
+        {
+          "path": "packages/systemd/systemd_257.13-1~deb13u1.dsc",
+          "url": "https://deb.debian.org/debian/pool/main/s/systemd/systemd_257.13-1~deb13u1.dsc",
+          "sha256": "1b3405d671a82d1e20c9d99f52d4336aafe8543b28d04e91b7f1f586d3a667c7",
+          "size_bytes": 8696,
+          "role": "Debian source descriptor"
+        },
+        {
+          "path": "packages/systemd/systemd_257.13.orig.tar.gz",
+          "url": "https://deb.debian.org/debian/pool/main/s/systemd/systemd_257.13.orig.tar.gz",
+          "sha256": "1eb7d5f9ff8a426ff880a3cded9ce819613ba8003ac5ddde9eca162f14ddabe7",
+          "size_bytes": 16543653,
+          "role": "Original file declared in the Debian DSC SHA-256 table"
+        },
+        {
+          "path": "packages/systemd/systemd_257.13-1~deb13u1.debian.tar.xz",
+          "url": "https://deb.debian.org/debian/pool/main/s/systemd/systemd_257.13-1~deb13u1.debian.tar.xz",
+          "sha256": "9c6e435d613b996efcdb3b7dd9a4cebaa745333a3f64dc722f3fad646f1fdc1a",
+          "size_bytes": 183128,
+          "role": "Original file declared in the Debian DSC SHA-256 table"
+        }
+      ],
+      "descriptor_verification": "HTTPS from Debian; retained clear-signed descriptor; all declared file sizes and SHA-256 values verified. Uploader OpenPGP signature was not independently verified."
+    }
+  ],
+  "license_texts": [
+    {
+      "path": "licenses/LGPL-2.txt",
+      "sha256": "cc535c21133c895b56b374c8a1dc1eb948d99003ed2b47372069456b62f42b24",
+      "size_bytes": 25270,
+      "origin": "Debian standard full LGPL-2 license text, unchanged"
+    },
+    {
+      "path": "licenses/LGPL-2.1.txt",
+      "sha256": "20e50fe7aae3e56378ebf0417d9de904f55a0e61e4df315333e632a4d3555d95",
+      "size_bytes": 26419,
+      "origin": "Debian standard full LGPL-2.1 license text, unchanged"
+    },
+    {
+      "path": "licenses/GPL-2.txt",
+      "sha256": "edaef632cbb643e4e7a221717a6c441a4c1a7c918e6e4d56debc3d8739b233f6",
+      "size_bytes": 17984,
+      "origin": "Debian standard full GPL-2 license text, unchanged"
+    }
+  ],
+  "companion_readme": {
+    "path": "README.txt",
+    "sha256": "671d583184e2c0b6dba0d179aa93063ea1ae79fcc03043a71fe71cad7533bf87",
+    "size_bytes": 1892
+  },
+  "verification": "Every descriptor-listed original file checked against its declared size and SHA-256; no archives modified or sources executed."
+}
