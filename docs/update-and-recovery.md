@@ -1,6 +1,6 @@
 # Updates and recovery
 
-There is no validated public package or update procedure yet. A reviewed release must document its supported update path and which earlier versions it can update safely.
+The [experimental community preview](https://github.com/alexandrefortes/ac-deck/tree/community-preview-001) is available, but there is no validated public update procedure yet. A supported release must document its update path and which earlier versions it can update safely.
 
 ## Data to preserve
 

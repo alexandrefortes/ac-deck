@@ -1,6 +1,6 @@
 # Installation and availability
 
-Source is available in this repository under [PolyForm Noncommercial 1.0.0](../LICENSE), with the community builder and synthetic tests. A public installer or downloadable runtime package is not available while bundled-library LGPL review remains pending. Physical Steam Deck validation has not yet been performed. You can inspect and test the source using the commands below.
+Source is available in this repository under [PolyForm Noncommercial 1.0.0](../LICENSE), with the community builder and synthetic tests. An experimental runtime preview and corresponding dependency sources are available; physical Steam Deck validation has not yet been performed. You can inspect and test the source using the commands below.
 
 ## What the project provides
 
@@ -23,7 +23,11 @@ No public compatibility matrix is validated yet. A future release must identify 
 
 ## Installing a reviewed release
 
-No runtime package has been published. A release must provide the exact download location, checksum, extraction layout and supported Steam launch entry after its LGPL compliance review, with physical validation reported separately. Those instructions are not available at this source-preview stage.
+An [experimental Linux x86_64 preview](https://github.com/alexandrefortes/ac-deck/tree/community-preview-001) is available with its [checksums](https://github.com/alexandrefortes/ac-deck/blob/community-preview-001/SHA256SUMS) and corresponding dependency sources. It requires GLIBC 2.39; SteamOS and physical Steam Deck compatibility have not been verified. This is a preview, not a supported installer or update procedure.
+
+Download `ac-deck-linux-x86_64.tar.gz` and verify its SHA-256 against `SHA256SUMS` before extracting. The archive contains the `ac-deck-linux-x86_64/` folder, executable, notices and an informational `LEIA-ME.txt`. The companion `ac-deck-dependency-sources.tar.gz` contains corresponding LGPL library sources.
+
+The preview runtime SHA-256 is `c5180c63af36ab329418f952d0e4c7fbeafceb122fbb5be185eeed5372ff1f7c`. Its dependency-sources archive SHA-256 is `ceb3dc08c1a10b39485caf7fe6dcf29aa214794a0f3327dc17f4d98fb02527d3`.
 
 The supported installation flow must cover:
 
@@ -33,7 +37,7 @@ The supported installation flow must cover:
 4. Configuring the documented Steam entry and preserving the player's existing Proton setup.
 5. Starting the launcher and checking the discovered content before the player starts a race.
 
-The exact commands will be added after the public candidate passes [release review](community-release-checklist.md). This page does not supply a substitute installer or an unverified download link.
+A supported installation procedure requires the checks tracked in the [release review](community-release-checklist.md).
 
 ## Building from source
 
@@ -77,7 +81,7 @@ You can check the candidate's informational CLI without opening the launcher win
 local/work/community-local-01/ac-deck-linux-x86_64/ac-deck --help
 ```
 
-A successful compilation produces a local candidate, not a published release or proof of Steam Deck compatibility. Binary publication remains pending the [LGPL compliance review](../THIRD_PARTY_NOTICES.md#binary-distribution-review) while physical Steam Deck validation remains separate. Record source hashes, native inputs, notices, CLI/resource checks and actual platform observations as part of [release review](community-release-checklist.md).
+A successful compilation produces a local candidate, not a published release or proof of Steam Deck compatibility. When distributing your own build, include the first-party license and notice, relevant third-party notices and corresponding dependency sources; review the [LGPL requirements](../THIRD_PARTY_NOTICES.md#binary-distribution-review). The builder does not automatically add the first-party LICENSE and NOTICE. Physical Steam Deck validation remains separate. Record source hashes, native inputs, notices, CLI/resource checks and actual platform observations as part of [release review](community-release-checklist.md).
 
 ## What counts as verified
 

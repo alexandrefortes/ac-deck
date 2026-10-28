@@ -3,4 +3,9 @@ License 1.0.0 in LICENSE. The license's permitted purposes and exceptions are
 defined in its full text. Third-party components retain their own licenses;
 see THIRD_PARTY_NOTICES.md and the accompanying notices.
 
+The terms for third-party LGPL libraries preserve the recipient's applicable
+rights to modify or replace those libraries for their own use and reverse
+engineer the combined work for debugging those modifications. Corresponding
+library sources and notices accompany the compiled community distribution.
+
 Required Notice: Copyright 2026 Alexandre Fortes Santana

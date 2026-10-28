@@ -11,9 +11,8 @@ not replace any third-party component's own license.
 The driving-haptics integration retains the attribution supplied in
 [ACC DualSense Feedback](licenses/ACC-DualSense-Feedback.txt).
 
-Local compiled candidates contain their selected runtime dependencies and
-license notices under licenses/. A runtime package has not been published.
-Review the exact package inventory:
+The experimental community preview contains its selected runtime dependencies
+and license notices under licenses/. Review the exact package inventory:
 
 | Component | Notice location in the compiled package |
 | --- | --- |
@@ -30,14 +29,9 @@ community distribution.
 
 ## Binary distribution review
 
-Public binary distribution remains pending review of the bundled libraries'
-applicable LGPL obligations and their interaction with the first-party terms.
-The review must cover the exact libraries and versions, required notices,
-corresponding source or source-offer requirements where applicable, and users'
-applicable rights to replace or relink those libraries and debug modifications.
-Including license notice files alone does not establish full compliance.
-
-Keep third-party rights intact and review the combined package before upload.
-Source availability under PolyForm is not a statement that the compiled
-candidate is cleared for distribution. Physical Steam Deck validation is also
-pending, as recorded in the [community release checklist](docs/community-release-checklist.md).
+The [community preview](https://github.com/alexandrefortes/ac-deck/tree/community-preview-001)
+includes a separate archive of corresponding LGPL dependency sources and their
+inventory. LGPL recipients retain applicable rights to modify or replace those
+libraries for their own use and reverse engineer the combined work for
+debugging such modifications. The first-party license does not supersede the
+third-party licenses. Review notices and corresponding sources for each build.

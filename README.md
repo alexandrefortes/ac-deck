@@ -2,7 +2,7 @@
 
 A controller-friendly launcher for the original Assetto Corsa on Steam Deck.
 
-**Source-available:** source is available in this repository under [PolyForm Noncommercial 1.0.0](LICENSE), alongside the community builder, synthetic tests and interface previews. A runtime package is not published: review of bundled LGPL components remains pending. Physical Steam Deck validation has not yet been performed.
+**Source-available:** source is available in this repository under [PolyForm Noncommercial 1.0.0](LICENSE), alongside the community builder, synthetic tests and interface previews. An [experimental runtime preview and its dependency sources](https://github.com/alexandrefortes/ac-deck/tree/community-preview-001) are available. Physical Steam Deck validation has not yet been performed.
 
 [![Drive screen showing demonstration cars, tracks and race settings](docs/screenshots/ac-deck-drive-1280x800.png)](docs/screenshots/ac-deck-drive-1920x1200.png)
 
@@ -58,7 +58,7 @@ python -B -m unittest discover -s tests -v
 ```
 
 A local candidate has passed the [documented build checks](docs/build-validation.md).
-Binary distribution remains unavailable pending LGPL compliance review. Physical Steam Deck validation remains separate.
+An experimental binary preview and corresponding dependency sources are available; physical Steam Deck validation remains separate.
 
 The [source build guide](docs/installation.md#building-from-source) documents the real `--community` builder and its explicit native-library, font and license inputs.
 

@@ -8,11 +8,12 @@ That manifest identifies the private source origin as
 repository revision used to compile the candidate. The recorded source hashes
 match both trees.
 Source is available in this repository under [PolyForm Noncommercial
-1.0.0](../LICENSE). This report records a prepared local candidate, not a
-published runtime package. Binary publication remains pending the
-[bundled-library LGPL compliance review](../THIRD_PARTY_NOTICES.md#binary-distribution-review)
-while physical Steam Deck validation remains separate. The archive hash below identifies this
-local candidate and is not a public download announcement.
+1.0.0](../LICENSE). This report records the original local candidate. An [experimental assembled
+preview](https://github.com/alexandrefortes/ac-deck/tree/community-preview-001)
+is now public, with first-party license and notice, third-party notices and
+corresponding dependency sources. Physical Steam Deck validation remains
+separate. The archive hash below identifies the original local candidate; the
+published preview has its own checksum in the preview branch.
 
 | Check | Result |
 | --- | --- |
@@ -37,6 +38,6 @@ The final inventory, source hashes, notices and CLI were verified again.
 No Steam, launcher window, race, physical microphone or paid API was opened.
 These checks do not establish physical Steam Deck behavior, minimum FPS,
 offline operation or complete game-data portability. The first-party license
-choice is resolved; the dependencies retain their own terms. LGPL compliance
-review, package publication and hardware validation remain separate steps in
-the [release checklist](community-release-checklist.md).
+choice is resolved; the dependencies retain their own terms. The experimental
+package and corresponding dependency sources are published; hardware validation
+remains separate in the [release checklist](community-release-checklist.md).
