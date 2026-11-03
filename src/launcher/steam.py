@@ -6,8 +6,7 @@ import sys
 from . import file_io as safe
 
 
-def steam_command(command, source, package):
-    """Conserva runtime/verb/argumentos; troca exatamente um alvo conhecido."""
+def _target_index(command, source):
     original = str(Path(source)/'AssettoCorsa.exe')
     if not command or any(not isinstance(v,str) or not v or '\0' in v for v in command):
         raise ValueError('Comando Steam vazio ou inválido')
@@ -21,9 +20,21 @@ def steam_command(command, source, package):
     index = positions[0]
     if index < 2 or command[index-1] not in ('run','waitforexitandrun') or Path(command[index-2]).name != 'proton':
         raise ValueError('O alvo não está numa invocação Proton reconhecida')
+    return index
+
+
+def steam_command(command, source, package):
+    """Conserva runtime/verb/argumentos; troca exatamente um alvo conhecido."""
+    index = _target_index(command, source)
     result = list(command)
     result[index] = str(Path(package)/'game/acs.exe')
     return result
+
+
+def prefix_command(command, source):
+    """Inicializa só o prefixo pelo Proton que a Steam já selecionou."""
+    index = _target_index(command, source)
+    return list(command[:index]) + [r'C:\windows\system32\cmd.exe', '/c', 'exit']
 
 
 def steam_environment(environment, package):

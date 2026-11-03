@@ -187,6 +187,11 @@ def parse(data, config):
                          completion_evidence='explicit_cancelled' if cancelled else
                              'player_lap_target_reached' if completed else 'not_confirmed',
                          recorded_laps=laps))
+        metric = {4: ('bestlap', 'time'), 5: ('timeattack', 'points'), 6: ('drift', 'points')}.get(kind)
+        if metric:
+            matching = [item for item in extras if isinstance(item, dict) and item.get('name') == metric[0]]
+            value = matching[0].get(metric[1]) if len(matching) == 1 else None
+            rows[-1]['objective_value'] = value if type(value) is int and 0 < value <= 2147483647 else None
     return dict(track=config['track'], layout=config['layout'],
                 layout_evidence=('track_layout_reported_by_result' if layout_reported
                                  else 'configured_not_reported_by_result'),

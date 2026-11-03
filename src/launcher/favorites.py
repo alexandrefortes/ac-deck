@@ -29,7 +29,7 @@ def clean(value=None):
     for row in value['tracks']:
         if not isinstance(row, dict) or set(row) != {'id', 'layout'}:
             raise ValueError('Invalid favorite track/layout.')
-        tracks.add((content.identifier(row['id']), content.identifier(row['layout'], empty=True)))
+        tracks.add((content.identifier(row['id']), content.layout_identifier(row['layout'], empty=True)))
     return dict(schema_version=1, cars=cars,
                 tracks=[dict(id=identity, layout=layout) for identity, layout in sorted(tracks)])
 
@@ -90,13 +90,13 @@ def contains(value, kind, row):
     return False
 
 
-def recover(path):
+def recover(path, *, prefix='favorites'):
     """Após confirmação explícita, preserva o original e inicia uma lista vazia."""
     path = safe.absolute(path)
     safe.check_components(path)
     stream, before = safe.open_reference(path)
     token = uuid.uuid4().hex
-    backup = path.with_name('favorites-preserved-' + token + '.json')
+    backup = path.with_name(prefix + '-preserved-' + token + '.json')
     temporary = path.with_name(path.name + '.' + token + '.new')
     with stream, backup.open('xb') as output:
         shutil.copyfileobj(stream, output)
@@ -123,7 +123,7 @@ def toggle(value, kind, row):
         item = content.identifier(row['id'])
     elif kind == 'tracks':
         item = dict(id=content.identifier(row['id']),
-                    layout=content.identifier(row.get('layout', ''), empty=True))
+                    layout=content.layout_identifier(row.get('layout', ''), empty=True))
     else:
         raise ValueError('Favorites support cars and track layouts only.')
     if item in result[kind]:

@@ -67,6 +67,28 @@ class FileIOTests(unittest.TestCase):
                                            "st_file_attributes": file_io.REPARSE_POINT})()
         self.assertTrue(file_io.linked(info))
 
+    def test_rename_new_publishes_files_and_directories_without_replacing_existing_data(self):
+        for directory in (False, True):
+            with self.subTest(directory=directory):
+                source = self.project / ('directory' if directory else 'file')
+                target = source.with_name(source.name + '-published')
+                if directory:
+                    source.mkdir()
+                    (source / 'content').write_bytes(b'new data')
+                    target.mkdir()
+                    (target / 'keep').write_bytes(b'player data')
+                else:
+                    source.write_bytes(b'new data')
+                    target.write_bytes(b'player data')
+                with self.assertRaises(FileExistsError):
+                    file_io.rename_new(source, target)
+                self.assertEqual(b'player data', (target / 'keep' if directory else target).read_bytes())
+                self.assertEqual(b'new data', (source / 'content' if directory else source).read_bytes())
+                vacant = source.with_name(source.name + '-vacant')
+                file_io.rename_new(source, vacant)
+                self.assertFalse(source.exists())
+                self.assertEqual(b'new data', (vacant / 'content' if directory else vacant).read_bytes())
+
     def test_generic_hash_still_reads_own_hardlinked_file_but_reference_hash_refuses_it(self):
         target = self.project / "own-code.py"
         target.write_bytes(b"# synthetic authored code\n")

@@ -6,6 +6,8 @@ dependências. A fonte bitmap abaixo é desenho autoral, não um asset do jogo.
 from . import graphics_settings, session_settings
 import ctypes as C
 import ctypes.util
+import math
+from decimal import Decimal
 from pathlib import Path
 import struct
 import sys
@@ -20,9 +22,9 @@ import threading
 
 from .content import MODES, pp_filters
 from .graphics import LABELS as GRAPHICS_LABELS
-from . import controls, previews, conditions, comfort, graphics, chase_camera, event_synthetizer, ai_events, api_credentials
-from .csp import AI_LABELS, VERSION as CSP_VERSION
-from . import driving_haptics, session_process, ai_preferences, ai_usage, ai_report
+from . import controls, previews, conditions, comfort, graphics, chase_camera, gamepad_fx, event_synthetizer, ai_events, api_credentials
+from .csp import VERSION as CSP_VERSION
+from . import driving_haptics, session_process, ai_preferences, ai_usage, ai_report, proximity_alert
 
 # Sete linhas de cinco bits por caractere; escala inteira na textura.
 FONT = {
@@ -516,17 +518,20 @@ class Menu:
              'Automatic gearbox','Time of day','Automatic clutch')
     graphics_options=('Profile','Resolution','FPS and frametime','PP filter')
 
-    def __init__(self,catalog,selection=None,*,csp=False,game=None,synthesis_store=None,catalog_cache=False,pp_filter_cache=None):
+    def __init__(self,catalog,selection=None,*,csp=False,game=None,synthesis_store=None,catalog_cache=False,pp_filter_cache=None,current_values=None,current_provider=None):
         self.catalog_cache=bool(catalog_cache)
+        self.current_provider=current_provider
+        self.current_values=dict(current_values or (current_provider() if current_provider else {}))
         if self.catalog_cache and game is not None and not all(key in catalog for key in ('synthesis_classes','synthesis_weather')):
             # O catálogo básico já foi lido ao abrir o app. Acrescentar os
             # metadados uma vez; trocar de área não deve reler a instalação.
             catalog=event_synthetizer.discover(game,catalog=catalog)
         self.catalog=catalog
         self.game=Path(game) if game is not None else None
+        self.gamepad_scripts=gamepad_fx.scripts(self.game) if csp else {}
         self.preview_cache={}
         self.csp=csp
-        self.graphics_labels={key:value for key,value in GRAPHICS_LABELS.items() if csp or not graphics.uses_csp(key)}
+        self.graphics_labels=dict(GRAPHICS_LABELS)
         self.pp_filters=(list(pp_filter_cache) if pp_filter_cache is not None else
                          [None]+(pp_filters(self.game) if self.game is not None else []))
         self.tabs=type(self).tabs
@@ -534,41 +539,34 @@ class Menu:
         self.graphics_options=type(self).graphics_options+('Frame limiter',)+(('Smart Shadows (CSP)','Shadow distance (CSP)') if csp else ())+graphics_settings.labels(csp)
         self.control_keys=tuple(chase_camera.SETTINGS if csp else ())+(('control_mode',) if csp else ())+tuple(controls.FIELDS)+(
             'steer_gamma_tenths','hide_driver_arms','virtual_steer_degrees',*controls.BINDINGS,
-            'car_damage_pct','abs_mode','traction_control','stability_control')+tuple(comfort.SETTINGS if csp else ())+tuple(driving_haptics.SETTINGS if csp else ())
-        self.options=type(self).options+(('Improved AI (CSP)','Experimental AI (CSP)') if csp else ())
+            'car_damage_pct','abs_mode','traction_control','stability_control','ghost')+tuple(comfort.SETTINGS if csp else ())+tuple(driving_haptics.SETTINGS if csp else ())+tuple(gamepad_fx.KEYS if csp else ())+tuple(proximity_alert.DEFAULTS if csp else ())
+        self.options=type(self).options
         if not catalog['cars'] or not catalog['tracks'] or not catalog['weather']:
             raise ValueError('No usable cars, tracks or weather in the catalog')
         self.selection=dict(car=catalog['cars'][0]['id'],track=catalog['tracks'][0]['id'],
             layout=catalog['tracks'][0]['layout'],mode=0,opponents=5,ai=90,laps=5,minutes=20,
             automatic=True,resolution=[1280,800],hud=True,weather=catalog['weather'][0],event='',
-            graphics_profile='csp_performance' if csp else 'performance',control_mode='assisted' if csp else 'original',
-            graphics_profiles_version=2,time_minutes=None,pp_filter=None,
-            ai_behavior='improved' if csp else 'original',ai_experimental=False,
-            **(dict.fromkeys(controls.FIELDS)|controls.DEFAULTS|comfort.DEFAULTS|chase_camera.DEFAULTS|driving_haptics.DEFAULTS))
+            graphics_profile='csp_performance',control_mode='assisted' if csp else 'original',
+            time_minutes=None,pp_filter=None,ghost=True,
+            **(dict.fromkeys(controls.FIELDS)|controls.DEFAULTS|comfort.DEFAULTS|chase_camera.DEFAULTS|driving_haptics.DEFAULTS|gamepad_fx.DEFAULTS|proximity_alert.DEFAULTS))
         self.selection.update(graphics.normalize(selection or {},csp_available=csp))
+        if type(self.selection['ghost']) is not bool:
+            self.selection['ghost']=True
         if (self.selection['chase_camera'] in chase_camera.BACC
                 and not any(key in (selection or {}) for key in chase_camera.GEOMETRY)):
             self.selection.update(chase_camera.geometry_defaults(self.selection['chase_camera']))
-        if (selection or {}).get('controls_version') != 1 and self.selection['steer_deadzone_pct'] is None:
-            self.selection['steer_deadzone_pct']=0
-        self.selection['controls_version']=1
         if isinstance(self.selection.get('mirrors'),str) and self.selection['mirrors'] in comfort.MIRRORS:
             self.selection['mirrors']='off'
-        if self.selection.get('graphics_profile') not in self.graphics_labels:
-            value=self.selection.get('graphics_profile')
-            self.selection['graphics_profile']=graphics.base_profile(value) if value in GRAPHICS_LABELS else 'performance'
         if self.selection.get('pp_filter') not in self.pp_filters:
             self.selection['pp_filter']=None
         if self.selection.get('control_mode') not in controls.MODES:
             self.selection['control_mode']='assisted' if csp else 'original'
         controls.validate(self.selection)
+        gamepad_fx.validate(self.selection)
+        proximity_alert.validate(self.selection)
         comfort.validate(self.selection)
         chase_camera.validate(self.selection)
         conditions.validate(self.selection)
-        if self.selection.get('ai_behavior') not in AI_LABELS:
-            self.selection['ai_behavior']='improved' if csp else 'original'
-        if type(self.selection.get('ai_experimental')) is not bool:
-            self.selection['ai_experimental']=False
         car,track=self.car(),self.track()
         self.selection.update(car=car['id'],track=track['id'],layout=track['layout'])
         if self.selection.get('skin') not in car['skins']:
@@ -591,7 +589,6 @@ class Menu:
         self.event_options_file=Path(synthesis_store).parent/'event-options.json' if synthesis_store is not None else None
         event_state_unavailable=False
         options_loaded=False
-        legacy_opponents=False
         if self.event_options_file is not None:
             try:
                 event_synthetizer.recover_state(synthesis_store,self.event_options_file)
@@ -604,7 +601,6 @@ class Menu:
                 if stored is not None:
                     self.event_options=event_synthetizer.options(self.selection,stored)
                     options_loaded=True
-                    legacy_opponents='opponents' not in stored
             except (OSError,ValueError,RuntimeError,KeyError,TypeError):
                 self.message='Saved event settings unavailable. Manual settings preserved.'
         self.api_key=''
@@ -646,8 +642,6 @@ class Menu:
                         self.event_options=event_synthetizer.options(proposal['selection'],
                             dict(pins=event_synthetizer.pins(proposal.get('pins')),
                                  laps=proposal['selection']['laps'],ai=proposal['selection']['ai']))
-                    elif legacy_opponents:
-                        self.event_options['opponents']=proposal['selection']['opponents']
                     if event_synthetizer.matches(proposal,self.event_options):
                         if hud_changed:
                             event_synthetizer.save_state(synthesis_store,proposal,self.event_options_file,self.event_options)
@@ -692,6 +686,27 @@ class Menu:
     def clamp_index(self,tab):
         self.indices[tab]=max(0,min(self.indices[tab],len(self.rows(tab))-1))
 
+    def current_value(self, key):
+        value = self.selection.get(key)
+        return self.current_values.get(key) if value is None or value == 'keep' else value
+
+    def refresh_current_values(self):
+        if self.current_provider:
+            self.current_values = dict(self.current_provider())
+
+    @staticmethod
+    def display_number(value, unit=''):
+        if value is None:
+            return 'Unavailable'
+        return (format(value.normalize(), 'f') if isinstance(value, Decimal) else format(value, 'g'))+unit
+
+    @staticmethod
+    def next_number(current, low, high, step, delta):
+        if current is None:
+            return low if delta > 0 else high
+        value = (math.floor(current/step)+1)*step if delta > 0 else (math.ceil(current/step)-1)*step
+        return max(low,min(high,value))
+
     def rows(self,tab=None):
         tab=self.tab if tab is None else tab
         if tab==6:
@@ -729,14 +744,11 @@ class Menu:
                     'From session' if s['time_minutes'] is None else
                     f"{s['time_minutes']//60:02}:{s['time_minutes']%60:02}",
                     'On' if s['automatic_clutch'] else 'Off')
-            if self.csp:
-                values+=('On' if s['ai_behavior']=='improved' else 'Off',
-                         'On' if s['ai_experimental'] else 'Off')
             return [dict(name=key+' : '+str(value)) for key,value in zip(self.options,values)]
         if tab==4:
             s=self.selection
             values=(GRAPHICS_LABELS[s['graphics_profile']], ' x '.join(map(str,s['resolution'])),
-                    'On' if s['hud'] else 'Off',s['pp_filter'] or 'Keep current')
+                    'On' if s['hud'] else 'Off',self.current_value('pp_filter') or 'Unavailable')
             values+=(comfort.LIMITERS[s['frame_limiter']],)
             if self.csp:
                 values+=('On' if s['smart_shadows'] else 'Off',str(s['shadow_distance_m'])+' m')
@@ -756,25 +768,33 @@ class Menu:
                     rows.append(dict(name=label+' : '+shown))
                 rows.append(dict(name='Steering : '+controls.MODES[self.selection['control_mode']]))
             for key,(_,label) in controls.FIELDS.items():
-                value=self.selection.get(key)
-                rows.append(dict(name=label+' : '+('Keep current' if value is None else str(value)+'%')))
-            gamma=self.selection['steer_gamma_tenths']
+                value=self.current_value(key)
+                rows.append(dict(name=label+' : '+self.display_number(value,'%')))
+            gamma=self.current_value('steer_gamma_tenths')
             degrees=self.selection['virtual_steer_degrees']
-            rows.extend((dict(name='Steering gamma : '+('Keep current' if gamma is None else format(gamma/10,'.1f'))),
+            rows.extend((dict(name='Steering gamma : '+self.display_number(None if gamma is None else gamma/10)),
                 dict(name='Hide driver arms : '+('On' if self.selection['hide_driver_arms'] else 'Off')),
                 dict(name='Virtual steering : '+('Unlimited' if degrees==0 else str(degrees)+' degrees'))))
             rows.extend(dict(name=label+' : '+controls.BUTTONS[self.selection[key]])
                         for key,(_,label,_) in controls.BINDINGS.items())
-            damage=self.selection['car_damage_pct']
-            rows.append(dict(name='Car damage : '+('Keep current' if damage is None else str(damage)+'%')))
+            damage=self.current_value('car_damage_pct')
+            rows.append(dict(name='Car damage : '+self.display_number(damage,'%')))
             rows.append(dict(name='ABS : '+comfort.ASSIST_LABELS[self.selection['abs_mode']]))
             rows.append(dict(name='Traction control : '+comfort.ASSIST_LABELS[self.selection['traction_control']]))
             rows.append(dict(name='Stability control : '+str(self.selection['stability_control'])+'%'))
+            rows.append(dict(name='Ghost : '+('On' if self.selection['ghost'] else 'Off')))
             if self.csp:
                 rows.extend(dict(name=label+' : '+(str(round(self.selection[key]*100))+'%' if key=='csp_ui_scale'
                     else 'On' if self.selection[key] else 'Off')) for key,label in comfort.SETTINGS.items())
                 rows.extend(dict(name=label+' : '+(('On' if self.selection[key] else 'Off') if key=='driving_haptics'
                     else str(self.selection[key])+'%')) for key,label in driving_haptics.SETTINGS.items())
+                script=self.selection['gamepad_script']
+                name=self.gamepad_scripts.get(script, 'Missing: '+script)
+                rows.append(dict(name='Gamepad FX script : '+name))
+                rows.append(dict(name='AGA assist : '+{'on':'On','off':'Off'}.get(self.current_value('aga_enabled'),'Unavailable')))
+                rows.append(dict(name='Proximity alert (CSP) : '+('On' if self.selection['proximity_alert'] else 'Off')))
+                rows.append(dict(name='Side detection range : '+str(self.selection['proximity_lateral_range'])+' m'))
+                rows.append(dict(name='Rear detection range : '+str(self.selection['proximity_rear_range'])+' m'))
             return rows
         return self.catalog[('cars','tracks','events')[tab]]
 
@@ -782,8 +802,7 @@ class Menu:
         s=self.selection
         keys=(self.control_keys if self.tab==5 else
               self.graphics_keys if self.tab==4 else
-              ('mode','skin','weather','opponents','ai','laps','minutes','automatic','time_minutes','automatic_clutch')+
-              (('ai_behavior','ai_experimental') if self.csp else ()))
+              ('mode','skin','weather','opponents','ai','laps','minutes','automatic','time_minutes','automatic_clutch'))
         key=keys[self.indices[self.tab]]
         if key=='hud':
             previous=s[key]
@@ -811,12 +830,9 @@ class Menu:
             self.message='Stability control: 0% off, 100% maximum assistance. Applies next session.'
             return
         if key=='car_damage_pct':
-            if s[key] is None:
-                s[key]=0 if delta>0 else 100
-            else:
-                value=((s[key]//10+1)*10 if delta>0 else ((s[key]-1)//10)*10)
-                s[key]=value if 0<=value<=100 else None
-            self.message='Car damage: 0% off, 100% normal. Keep current preserves the existing value. Applies next session.'
+            current=self.current_value(key)
+            s[key]=self.next_number(current,0,100,10,delta)
+            self.message='Car damage: 0% off, 100% normal. Applies next session.'
             return
         if key=='time_minutes':
             if s[key] is None:
@@ -827,19 +843,14 @@ class Menu:
             self.message='Time of day, 08:00 to 18:00. From session preserves event conditions.'
             return
         if key in controls.FIELDS:
-            defaults=dict(steer_speed_pct=20,steer_filter_pct=60,speed_sensitivity_pct=50,
-                          steer_deadzone_pct=5,rumble_pct=100)
-            if s[key] is None:
-                s[key]=defaults[key]
-            else:
-                value=s[key]+5*delta
-                s[key]=value if 0<=value<=100 else None
-            self.message='Applies next session. Keep current preserves the existing value.'
+            current=self.current_value(key)
+            s[key]=self.next_number(current,0,100,5,delta)
+            self.message='Applies next session.'
             return
         if key=='steer_gamma_tenths':
-            values=[None,*range(1,51)]
-            s[key]=values[(values.index(s[key])+delta)%len(values)]
-            self.message='Steering gamma. Keep current preserves the existing value.'
+            current=self.current_value(key)
+            s[key]=self.next_number(current,1,50,1,delta)
+            self.message='Steering gamma. Applies next session.'
             return
         if key.startswith('gfx:'):
             graphics_settings.change(s,key[4:],delta)
@@ -852,6 +863,13 @@ class Menu:
         if key=='shadow_distance_m':
             s[key]=max(graphics.SHADOW_DISTANCE_MIN,min(graphics.SHADOW_DISTANCE_MAX,s[key]+10*delta))
             self.message='Shadow distance: 50 to 400 m. Saved; applies to CSP profiles next session. Enable Smart Shadows to use it; resolution can limit the visible range.'
+            return
+        if key in proximity_alert.RANGES:
+            minimum,maximum=proximity_alert.RANGES[key]
+            s[key]=max(minimum,min(maximum,s[key]+delta))
+            self.message=('Side gap limits both side and rear alerts. Applies next CSP session.'
+                          if key=='proximity_lateral_range' else
+                          'Rear gap behind the car. Applies next CSP session.')
             return
         if key=='virtual_steer_degrees':
             s[key]=max(0,min(1080,s[key]+10*delta))
@@ -873,22 +891,33 @@ class Menu:
                  'csp_ui_scale':list(comfort.SCALES),
                  **{key:list(values) for key,values in chase_camera.choices(s).items()},
                  'hide_driver_arms':[True,False],
-                 'pp_filter':self.pp_filters,
+                 'pp_filter':[value for value in self.pp_filters if value is not None],
                  'graphics_profile':list(self.graphics_labels),'control_mode':list(controls.MODES),
-                 'ai_behavior':list(AI_LABELS),'ai_experimental':[False,True]}
+                 'gamepad_script':list(dict.fromkeys([*self.gamepad_scripts,s['gamepad_script']])),
+                 'aga_enabled':['on','off'],
+                 'proximity_alert':[True,False], 'ghost':[True,False]}
         if key in choices:
             values=choices[key]
-            s[key]=values[(values.index(s[key])+delta)%len(values)]
+            if not values:
+                self.message='No installed options available.'
+                return
+            current=self.current_value(key)
+            s[key]=values[(values.index(current)+delta)%len(values)] if current in values else values[0 if delta>0 else -1]
             if key=='graphics_profile':
                 graphics_settings.reset(s,s[key])
-                self.message=GRAPHICS_LABELS[s[key]]+(': CSP enabled.' if graphics.uses_csp(s[key]) else ': base game, CSP disabled.')+' Graphics values replaced with this profile. Controls and comfort stay saved.'
+                self.message=GRAPHICS_LABELS[s[key]]+': CSP enabled. Graphics values replaced with this profile. Controls and comfort stay saved.'
             elif key=='control_mode':
-                self.message=('Assisted: CSP Gamepad Force; R3 switches Race/Drift.' if s[key]=='assisted'
-                              else 'Original: CSP steering assist off. Analog settings are separate.')
-            elif key=='ai_behavior':
-                self.message='AI '+AI_LABELS[s[key]]+'. Applies next session; level and grid are unchanged.'
-            elif key=='ai_experimental':
-                self.message='Alternative CSP AI. Requires Improved AI and a CSP profile. Applies next session.'
+                self.message=('Gamepad FX enabled for CSP profiles; choose a script in Gamepad FX.' if s[key]=='assisted'
+                              else 'Gamepad FX steering script off. Analog settings are separate.')
+            elif key=='gamepad_script':
+                self.message=('Selected script is not installed. Install it or select another.' if s[key] not in self.gamepad_scripts
+                              else 'Script saved. Enable Assisted steering and use a CSP graphics profile.')
+            elif key=='aga_enabled':
+                self.message='AGA 1.5.5 assist switch applies at the start of the next CSP session.'
+            elif key=='proximity_alert':
+                self.message='Peripheral proximity warning. Applies next CSP session.'
+            elif key=='ghost':
+                self.message='Ghost recording and playback in supported sessions. Applies next session.'
             elif key=='pp_filter':
                 self.message='Choose an installed native filter, such as default. Sol/Pure are not included.'
             elif key=='automatic_clutch':
@@ -1027,9 +1056,11 @@ class Menu:
         try:
             if self.game is None:
                 raise ValueError('Installed game path is required to generate an event.')
+            if getattr(self,'blacklist_error',False):
+                raise ValueError('Blacklist unavailable. Original file kept; recover it in the catalogue.')
             base=self.event_base()
             catalog=event_synthetizer.discover(self.game)
-            proposal,catalog=event_synthetizer.generate(self.game,base,fixed=self.event_options['pins'],catalog=catalog)
+            proposal,catalog=event_synthetizer.generate(self.game,base,fixed=self.event_options['pins'],catalog=catalog,blocked=getattr(self,'blacklist',{}).get('cars',()),blocked_tracks=getattr(self,'blacklist',{}).get('tracks',()))
             event_synthetizer.save_state(self.synthesis_store,proposal,self.event_options_file,self.event_options)
             self.replace_catalog(catalog)
             self.synthesis=proposal
@@ -1100,6 +1131,11 @@ class Menu:
             self.message='Installed game path is required to generate an event.'
             self.set_ai_report(ai_report.make('error',self.message))
             return False
+        if getattr(self,'blacklist_error',False):
+            self.message='Blacklist unavailable. Original file kept; recover it in the catalogue.'
+            return False
+        blocked=tuple(getattr(self,'blacklist',{}).get('cars',()))
+        blocked_tracks=deepcopy(getattr(self,'blacklist',{}).get('tracks',()))
         base=self.event_base()
         fixed=deepcopy(self.event_options['pins'])
         key=self.api_key
@@ -1118,7 +1154,7 @@ class Menu:
                 future.set_result(ai_events.generate(self.game,base,key,
                     effort=effort,fixed=fixed,results=ai_events.performance(self.synthesis_store),
                     preferences=preferences,previous=previous,current=current,
-                    usage_path=self.ai_usage_path,usage_state=usage_state,session_request=session_request,
+                    usage_path=self.ai_usage_path,usage_state=usage_state,session_request=session_request,blocked=blocked,blocked_tracks=blocked_tracks,
                     **(dict(instruction=instruction) if instruction else {})))
             except ai_events.AIError as error:
                 future.set_exception(error)
@@ -1348,7 +1384,7 @@ class Menu:
         w.rect(0,0,1280,800,bg)
         w.rect(32,32,6,72,accent)
         w.text('ac-deck',56,36,4)
-        w.text('MOD / BASE GAME + DLCS'+(' / CSP '+CSP_VERSION if graphics.uses_csp(self.selection['graphics_profile']) else ' / NO CSP'),58,88,2,color=muted)
+        w.text('MOD / BASE GAME + DLCS / CSP '+CSP_VERSION,58,88,2,color=muted)
         w.rect(1104,50,144,50,panel)
         w.text('Exit',1140,66,2,color=muted)
         for i,name in enumerate(self.tabs):
@@ -1448,7 +1484,7 @@ class ShutdownRequest:
         self.handlers.clear()
 
 
-def run(catalog,selection,start,*,proton=None,capture=None,library_path=None,preview=False,csp=False,game=None,trace=None,synthesis_store=None,on_exit=None,menu_class=None,on_tick=None,on_stop=None,on_stalled=None,on_selection=None):
+def run(catalog,selection,start,*,proton=None,capture=None,library_path=None,preview=False,csp=False,game=None,trace=None,synthesis_store=None,on_exit=None,menu_class=None,on_tick=None,on_stop=None,on_stalled=None,on_selection=None,on_session_preferences=None):
     # Antes da SDL: ela normalmente traduz SIGTERM em um SDL_QUIT sem origem.
     # O handler próprio conserva o pedido mesmo durante/finalizando a sessão.
     with ShutdownRequest() as shutdown:
@@ -1458,12 +1494,13 @@ def run(catalog,selection,start,*,proton=None,capture=None,library_path=None,pre
             return _run(catalog,selection,start,proton=proton,capture=capture,
                 library_path=library_path,preview=preview,csp=csp,game=game,trace=trace,
                 synthesis_store=synthesis_store,on_exit=on_exit,menu_class=menu_class,
-                shutdown=shutdown,on_tick=on_tick,on_stop=on_stop,on_selection=on_selection)
+                shutdown=shutdown,on_tick=on_tick,on_stop=on_stop,on_selection=on_selection,
+                on_session_preferences=on_session_preferences)
         finally:
             if guard is not None:guard.close()
 
 
-def _run(catalog,selection,start,*,proton=None,capture=None,library_path=None,preview=False,csp=False,game=None,trace=None,synthesis_store=None,on_exit=None,menu_class=None,on_tick=None,shutdown,on_stop=None,on_selection=None):
+def _run(catalog,selection,start,*,proton=None,capture=None,library_path=None,preview=False,csp=False,game=None,trace=None,synthesis_store=None,on_exit=None,menu_class=None,on_tick=None,shutdown,on_stop=None,on_selection=None,on_session_preferences=None):
     trace=trace or (lambda *args,**kwargs:None)
     menu=(menu_class or Menu)(catalog,selection,csp=csp,game=game,synthesis_store=synthesis_store)
     if preview:
@@ -1502,7 +1539,10 @@ def _run(catalog,selection,start,*,proton=None,capture=None,library_path=None,pr
                     except (OSError,ValueError,RuntimeError) as error:
                         trace('session_finish_error',error_type=type(error).__name__)
                         message='Session ended. Could not collect the result; check local storage.'
+                    if on_session_preferences is not None:
+                        menu.selection.update(on_session_preferences())
                     menu.message=message or ('Session ended. Code '+str(code)+'. Choose the next race.')
+                    menu.refresh_current_values()
                     if hasattr(menu,'refresh_history'):
                         try:
                             menu.refresh_history()
@@ -1514,6 +1554,8 @@ def _run(catalog,selection,start,*,proton=None,capture=None,library_path=None,pr
                         except (OSError,ValueError,RuntimeError) as error:
                             trace('rogue_refresh_error',error_type=type(error).__name__)
                     menu.session_running=False
+                    if hasattr(menu,'event_session_finished'):
+                        menu.event_session_finished(menu.message)
             # Keep the window mapped. No Hide/Show transition can stall return.
             actions=window.events()
             if 'quit' in actions:
@@ -1646,6 +1688,8 @@ def _run(catalog,selection,start,*,proton=None,capture=None,library_path=None,pr
                                 trace('rogue_refresh_error',reason='start_failed')
                     else:
                         menu.session_running=True
+                        if hasattr(menu,'event_session_started'):
+                            menu.event_session_started(chosen)
                         menu.quit_confirmation=False
                         menu.message='Session running. The launcher will return when the game closes.'
                         trace('session_started',pid=process.pid)

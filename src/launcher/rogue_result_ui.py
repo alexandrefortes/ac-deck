@@ -2,7 +2,7 @@
 from copy import deepcopy
 import time
 
-from . import rogue_rewards
+from . import content, favorites, rogue, rogue_rewards
 
 
 _UNCONFIRMED = {
@@ -37,6 +37,7 @@ _UNCONFIRMED = {
     'finish_not_confirmed': 'The result does not confirm that the race was finished.',
     'finish_evidence_missing': 'The result does not prove that the required laps were completed.',
     'final_position_missing': 'The race was finished, but the final position is missing.',
+    'objective_missing': 'The game did not save a unique, positive result for this event.',
     'fresh_file_and_matching_configuration': 'The saved result lacks a confirmed finish or final position.',
 }
 
@@ -61,12 +62,18 @@ class RogueResultUI:
         title = ('VICTORY' if outcome.get('position') == 1 else 'CHALLENGE COMPLETE') if status == 'won' else (
             'RUN OVER' if ended else 'CHALLENGE FAILED' if status == 'lost' else 'RESULT UNCONFIRMED')
         if status == 'start_failed':
-            title = 'RACE COULD NOT START'
+            title = 'RACE COULD NOT START' if selection['mode'] == 2 else 'EVENT COULD NOT START'
+        objective = outcome.get('objective')
         if status == 'won':
-            reason = 'Race finished. Position target achieved.'
+            reason = 'Target achieved.' if objective else 'Race finished. Position target achieved.'
         elif status == 'lost':
-            reason = ('Race cancelled before the finish.' if outcome.get('position') is None else
-                      f"Finished P{outcome['position']}. The challenge required P{outcome['target_position']} or better.")
+            if objective:
+                value = outcome.get('value')
+                reason = ('Event cancelled before a result.' if value is None else
+                          f"Recorded {rogue.format_value(objective['kind'], value)}. Target: {rogue.format_value(objective['kind'], objective['target'])}.")
+            else:
+                reason = ('Race cancelled before the finish.' if outcome.get('position') is None else
+                          f"Finished P{outcome['position']}. The challenge required P{outcome['target_position']} or better.")
             if not ended and run.get('challenge') is None:
                 reason += ' One spare life used. Continue to the next event.'
         else:
@@ -112,16 +119,61 @@ class RogueResultUI:
                  'Next Challenge' if data['tone'] == 'victory' or data.get('advance') else
                  'New Run / AI' if data['tone'] == 'over' and data['mode'] == 'ai' else
                  'New Run' if data['tone'] == 'over' else 'Retry Challenge')
-        return [self._item('rogue-result-details', 'button', 864, 708, 148, 52, 'Race details'),
+        return [self._item('rogue-result-details', 'button', 864, 708, 148, 52,
+                           'Race details' if data['selection']['mode'] == 2 else 'Event details'),
                 self._item('rogue-result-next', 'button', 1032, 708, 216, 52, label,
                            primary=True, disabled=self.session_running)]
 
     def rogue_result_items(self):
-        return [self._item('rogue-result', 'rogue-result', 248, 166, 1000, 438, '',
+        rows = [self._item('rogue-result', 'rogue-result', 248, 166, 1000, 166, '',
                            data=self.rogue_result, started=self.rogue_result_started,
                            disabled=True),
                 self._item('rogue-album', 'button', 248, 624, 200, 40, 'Achievements'),
                 self._item('rogue-result-back', 'button', 968, 624, 280, 40, 'Back to Rogue')]
+        return rows + self.result_content_items(self.rogue_result['selection'])
+
+    def result_content_items(self, selection, *, y=346, height=226):
+        rows = []
+        for card in self._cards(selection):
+            car = card['id'] == 'car'
+            card.update(id='result-car' if car else 'result-track', x=248 if car else 756,
+                        y=y, w=492, h=height, synthesis_card=True, disabled=True)
+            rows.append(card)
+            kind = 'cars' if car else 'tracks'
+            row = dict(id=selection['car']) if car else dict(id=selection['track'], layout=selection.get('layout', ''))
+            for index, (name, collection, error) in enumerate((('favorite', self.favorites, self.favorites_error),
+                                                               ('blacklist', self.blacklist, self.blacklist_error))):
+                contains = favorites.contains(collection, kind, row)
+                label = ('Remove from ' if contains else 'Add to ') + ('favorites' if index == 0 else 'blacklist')
+                rows.append(self._item('result-'+('car' if car else 'track')+'-'+name, 'button',
+                                       (248 if car else 756)+index*252, y+height+8, 240, 34,
+                                       label, disabled=self.session_running or error))
+        return rows
+
+    def result_content_activate(self, identity, selection):
+        if identity not in ('result-car-favorite', 'result-car-blacklist',
+                            'result-track-favorite', 'result-track-blacklist'):
+            return False
+        if self.session_running:
+            return True
+        track = '-track-' in identity
+        kind = 'tracks' if track else 'cars'
+        row = dict(id=selection['track'], layout=selection.get('layout', '')) if track else dict(id=selection['car'])
+        if identity.endswith('-blacklist'):
+            self._toggle_blacklist(row, kind=kind)
+        elif self.favorites_error:
+            self.message = 'Favorites unavailable. Recover them in the catalogue.'
+        else:
+            changed = favorites.toggle(self.favorites, kind, row)
+            try:
+                if self.favorites_path is not None:changed = favorites.save(self.favorites_path, changed)
+            except (OSError, ValueError, RuntimeError, TypeError):
+                self.message = 'Could not save favorites. Previous favorite kept.'
+                return True
+            self._set_favorites(changed)
+            self.favorites_revision += 1
+            self.message = 'Favorite saved.' if favorites.contains(changed, kind, row) else 'Favorite removed.'
+        return True
 
     def rogue_result_detail_items(self):
         data = self.rogue_result
@@ -132,13 +184,31 @@ class RogueResultUI:
                       if data['tone'] == 'unconfirmed' else '')
         cards = self._cards(selected)
         minutes = selected['time_minutes']
-        values = [('Car', cards[0]['label']), ('Circuit', cards[1]['label']),
-                  ('Race conditions', f"{selected['laps']} {'lap' if selected['laps'] == 1 else 'laps'} / {selected['opponents']} opponents / AI {selected['ai']}% / {minutes//60:02}:{minutes%60:02} / {selected['weather'].replace('_', ' ').title()}"),
-                  ('Result', diagnostic+('P'+str(outcome['position']) if outcome.get('position') is not None else 'Position unconfirmed')
-                   +f" / Target P{outcome['target_position']} or better / "+data['reason']),
+        if selected['mode'] == 2:
+            event_conditions = f"{selected['laps']} {'lap' if selected['laps'] == 1 else 'laps'} / {selected['opponents']} opponents / AI {selected['ai']}%"
+            result = ('P'+str(outcome['position']) if outcome.get('position') is not None else 'Position unconfirmed') + f" / Target P{outcome['target_position']} or better"
+        else:
+            event_conditions = content.MODES[selected['mode']][0]+' / Solo'
+            objective = outcome['objective']
+            result = rogue.format_value(objective['kind'], outcome.get('value')) + ' / Target ' + rogue.format_value(objective['kind'], objective['target'])
+        mastery = []
+        for axis in data['mastery']:
+            after, before = axis['after'], axis['before']
+            xp = str(after['xp'])+'/'+str(after['next_xp'])+' XP' if after['next_xp'] is not None else str(after['xp'])+' XP / MAX'
+            mastery.append((axis['label']+' mastery',
+                            f"{axis['label']} +{axis['awarded']} XP / Lv {after['level']} / {after['title']} / {xp}"
+                            + (' / LEVEL UP' if after['level'] > before['level'] else '')))
+        note = ('Progress saved. Your next challenge is waiting.' if data['tone'] == 'victory' else
+                f"Run rewards: +{data['run_xp']} car XP / +{data['run_xp']} circuit XP / {data['run_rewards']} discoveries. Permanent progress kept." if data['tone'] == 'over' else
+                '1 spare life used. Perfect streak reset. Continue to the next event.' if data.get('advance') else
+                '1 spare life used. Perfect streak reset. You can retry the same challenge.' if data['tone'] == 'retry' else
+                'Lives, XP and your perfect streak are unchanged. Retry the same challenge.')
+        values = [('Car / Circuit', cards[0]['label']+' / '+cards[1]['label']),
+                  ('Race conditions' if selected['mode'] == 2 else 'Event conditions', f"{event_conditions} / {minutes//60:02}:{minutes%60:02} / {selected['weather'].replace('_', ' ').title()}"),
+                  ('Result', diagnostic+result+' / '+data['reason']),
                   ('Run progress', f"{outcome['wins']} wins / Perfect streak {outcome['streak']} / Spare lives {outcome['lives']}"),
-                  ('Rewards saved', f"Car +{outcome['xp_awarded']} XP / Circuit +{outcome['xp_awarded']} XP / Spare lives {outcome['lives']} / Achievements kept")]
-        return [self._item('rogue-result-detail:'+str(index), 'info', 268, 164+index*81, 940, 70,
+                  *mastery, ('Run summary', note)]
+        return [self._item('rogue-result-detail:'+str(index), 'info', 268, 164+index*69, 940, 60,
                            label, value=value, value_scale=1.65, value_lines=1,
                            value_scroll='rogue-result-detail:'+str(index), disabled=True)
                 for index, (label, value) in enumerate(values)]
@@ -158,10 +228,14 @@ class RogueResultUI:
             self.new_rogue_run(data['mode'])
         else:
             self.rogue_result = None
-            self.message = 'Same challenge. Your progress is saved. Press Start race when ready.'
+            self.message = ('Same challenge. Your progress is saved. Press Start race when ready.'
+                            if data['selection']['mode'] == 2 else
+                            'Same challenge. Your progress is saved. Press Start when ready.')
             self.focus_id = 'start'
 
     def rogue_result_activate(self, identity):
+        if self.rogue_result_visible() and self.result_content_activate(identity, self.rogue_result['selection']):
+            return True
         if identity == 'rogue-result-next':
             self.rogue_result_continue()
             return True

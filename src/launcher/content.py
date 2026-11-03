@@ -11,6 +11,7 @@ from . import file_io as safe, game_config
 from . import controls, graphics, conditions, comfort, catalogue
 
 IDENTIFIER = re.compile(r'[A-Za-z0-9][A-Za-z0-9_-]{0,127}\Z')
+LAYOUT_IDENTIFIER = re.compile(r'[A-Za-z0-9](?:[A-Za-z0-9_ -]{0,126}[A-Za-z0-9_-])?\Z')
 CATALOG_VERSION = 2
 MODES = (('Practice', 1, 'PIT'), ('Hotlap', 4, 'HOTLAP_START'),
          ('Race', 3, 'START'), ('Time Attack', 5, 'START'), ('Drift', 6, 'START'))
@@ -40,6 +41,14 @@ def identifier(value, *, empty=False):
         return value
     if not isinstance(value, str) or not IDENTIFIER.fullmatch(value):
         raise ValueError('Identificador de conteúdo inválido')
+    return value
+
+
+def layout_identifier(value, *, empty=False):
+    if empty and value == '':
+        return value
+    if not isinstance(value, str) or not LAYOUT_IDENTIFIER.fullmatch(value):
+        raise ValueError('Identificador de layout inválido')
     return value
 
 
@@ -77,14 +86,14 @@ def metadata(path):
         return {}
 
 
-def folders(path):
+def folders(path, *, layouts=False):
     if not path.is_dir():
         return []
     safe.check_components(path)
     result = []
     for item in sorted(path.iterdir()):
         safe.check_components(item)
-        if item.is_dir() and IDENTIFIER.fullmatch(item.name):
+        if item.is_dir() and (LAYOUT_IDENTIFIER if layouts else IDENTIFIER).fullmatch(item.name):
             result.append(item)
     return result
 
@@ -112,7 +121,7 @@ def scan(game):
         variants = []
         if (folder/'ui/ui_track.json').is_file():
             variants.append(('', folder/'ui/ui_track.json'))
-        variants.extend((p.name, p/'ui_track.json') for p in folders(folder/'ui')
+        variants.extend((p.name, p/'ui_track.json') for p in folders(folder/'ui', layouts=True)
                         if (p/'ui_track.json').is_file())
         for layout, path in variants:
             info = metadata(path)
@@ -198,7 +207,7 @@ def session(game, catalog, selection, *, csp=False, cfg=None, base_cfg=None, xin
     else:
         car_id = identifier(selection['car'])
         track_id = identifier(selection['track'])
-        layout = identifier(selection.get('layout', ''), empty=True)
+        layout = layout_identifier(selection.get('layout', ''), empty=True)
     car = next((p for p in catalog['cars'] if p['id'] == car_id), None)
     track = next((p for p in catalog['tracks'] if (p['id'],p['layout']) == (track_id,layout)), None)
     if not car or not track:
@@ -238,6 +247,15 @@ def session(game, catalog, selection, *, csp=False, cfg=None, base_cfg=None, xin
         race[section] = dict(ACTIVE='0')
     race['HEADER'] = dict(VERSION='2')
     race['RACE'].update(MODEL=car_id, TRACK=track_id, CONFIG_TRACK=layout)
+    ghost = selection.get('ghost', True)
+    if type(ghost) is not bool:
+        raise ValueError('Preferência de ghost inválida')
+    hotlap = race.get('SESSION_0', 'TYPE', fallback='') == '4'
+    if hotlap or not ghost:
+        enabled = '1' if ghost and hotlap else '0'
+        race['GHOST_CAR'].update(RECORDING=enabled, PLAYING=enabled, LOAD=enabled, ENABLED='0')
+        if hotlap and not event_id:
+            race['GHOST_CAR'].update(FILE='', SECONDS_ADVANTAGE='0')
     # Eventos conservam seus campos/condições; validar todos os carros selecionados.
     total = int(race['RACE']['CARS'])
     if not 1 <= total <= track['pitboxes']:

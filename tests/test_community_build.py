@@ -36,6 +36,10 @@ class CommunityBuildTests(unittest.TestCase):
             (root/'src/fixture.py').write_text('# Owned production fixture\n')
             (root/'licenses').mkdir()
             (root/'licenses/ACC-DualSense-Feedback.txt').write_text('Owned notice fixture\n')
+            public_policy = root/'public-policy'
+            public_policy.mkdir()
+            for name in builder.COMMUNITY_NOTICES:
+                (public_policy/name).write_text('Synthetic notice for '+name+'\n', encoding='utf-8')
             native = root/'native'
             native.mkdir()
             (native/'libSDL2-2.0.so.0').write_bytes(b'owned native fixture')
@@ -76,7 +80,8 @@ class CommunityBuildTests(unittest.TestCase):
                                                  (builder.font_support, 'bundle'))]
             with redirect_stdout(io.StringIO()):
                 result = builder.build('community-fixture', native, font=font,
-                                       licenses_dir=notices, community=True)
+                                       licenses_dir=notices, community=True,
+                                       community_notices=public_policy)
             bundle = Path(result['bundle'])
             self.assertEqual('ac-deck-linux-x86_64', bundle.name)
             self.assertEqual('ac-deck-linux-x86_64.tar.gz', Path(result['archive']).name)
@@ -87,6 +92,13 @@ class CommunityBuildTests(unittest.TestCase):
             self.assertIn('no game, DLC', info['content_policy'])
             self.assertEqual({'src/fixture.py': builder.digest(root/'src/fixture.py')},
                              info['source_sha256'])
+            manifest = {row['path']: row for row in
+                        json.loads((bundle/'manifest.json').read_text(encoding='utf-8'))['files']}
+            for name in builder.COMMUNITY_NOTICES:
+                self.assertFalse((root/name).exists())
+                self.assertEqual((public_policy/name).read_bytes(), (bundle/name).read_bytes())
+                self.assertEqual(builder.digest(public_policy/name), info['community_notice_sha256'][name])
+                self.assertEqual(info['community_notice_sha256'][name], manifest[name]['sha256'])
             for field in ('csp', 'csp_fonts', 'gt5_camera', 'bacc_cameras', 'rogue_toasty_assets',
                           'rogue_album_assets', 'reused_payload_manifest'):
                 self.assertIsNone(info[field])
@@ -98,6 +110,33 @@ class CommunityBuildTests(unittest.TestCase):
             self.assertNotIn('/papao', readme)
             for call in private_calls:
                 call.assert_not_called()
+
+    def test_changed_notice_and_existing_destination_are_preserved(self):
+        with tempfile.TemporaryDirectory() as temporary, patch.object(builder, 'ROOT', Path(temporary)):
+            root = Path(temporary)
+            for name in builder.COMMUNITY_NOTICES:
+                (root/name).write_bytes(b'original notice')
+            hashes = builder.community_notice_hashes()
+            bundle = root/'bundle'
+            bundle.mkdir()
+            (root/'LICENSE').write_bytes(b'changed notice')
+            with self.assertRaises((ValueError, RuntimeError)):
+                builder.copy_community_notices(bundle, hashes)
+            self.assertEqual(b'changed notice', (root/'LICENSE').read_bytes())
+
+            other = root/'other'
+            other.mkdir()
+            (other/'LICENSE').write_bytes(b'existing destination')
+            with self.assertRaises(FileExistsError):
+                builder.copy_community_notices(other, builder.community_notice_hashes())
+            self.assertEqual(b'existing destination', (other/'LICENSE').read_bytes())
+
+    def test_explicit_community_notices_do_not_change_private_build_policy(self):
+        with patch.object(builder.safe, 'source_root') as read:
+            with self.assertRaisesRegex(ValueError, 'requires --community'):
+                builder.build('fixture', Path('/must-not-read'),
+                              community_notices=Path('/public-policy'))
+            read.assert_not_called()
 
 
 if __name__ == '__main__':

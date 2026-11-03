@@ -3,7 +3,7 @@ from concurrent.futures import Future
 from copy import deepcopy
 import threading
 
-from . import rogue, rogue_generator, rogue_duration, session_settings
+from . import content, rogue, rogue_generator, rogue_duration, session_settings, favorites
 from .rogue_rewards_ui import RogueRewardsUI
 from .rogue_result_ui import RogueResultUI
 
@@ -102,13 +102,13 @@ class RogueUI(RogueResultUI, RogueRewardsUI):
                                 'New run / AI', disabled=not available or pending),
                      self._item('rogue-album', 'button', 780, 166, 220, 48,
                                 'Achievements', disabled=not available)]
-            title = 'Run ended. Your XP and stickers remain.' if run else 'One challenge. One more race.'
+            title = 'Run ended. Your XP and stickers remain.' if run else 'One challenge. One more event.'
             rows += [self._item('rogue-intro', 'text', 248, 266, 990, 110, title,
-                                value='Win the finish-position challenge, grow your run and discover hidden badges.',
+                                value='Complete races, hotlaps and points challenges to grow your run and discover hidden badges.',
                                 disabled=True),
                      self._item('rogue-rules', 'text', 248, 414, 990, 114,
                                 'Your car and circuit stay locked for the current event.',
-                                value='One spare life to start. Daylight races / 08:00–16:00. AI generation uses your saved key only when you choose it.',
+                                value='One spare life to start. Daylight events / 08:00–16:00. AI generation uses your saved key only when you choose it.',
                                 disabled=True)]
             if not available:
                 rows.append(self._item('rogue-unavailable', 'text', 248, 550, 990, 40,
@@ -126,19 +126,37 @@ class RogueUI(RogueResultUI, RogueRewardsUI):
                                 f"Challenge {proposal['stage'] if proposal else rogue.stage(run)}   /   Wins {run['wins']}   /   Perfect streak {run['streak']}   /   Spare lives {run['lives']}",
                                 color=(218, 216, 208), scale=1.6, disabled=True)]
             if proposal:
+                rows.append(self._item('rogue-skip', 'button', 700, 622, 366, 42, 'Skip event / 1 life',
+                                       disabled=not available or pending or run['lives'] == 0))
+                mode = proposal['selection']['mode']
+                duration = (rogue_duration.label(proposal.get('duration')) if mode == 2 else
+                            'Complete a valid lap and exit; your best lap decides.' if mode == 1 else
+                            'End the session to record your points.')
                 rows.append(self._item('rogue-duration', 'text', 248, 119, 800, 24,
-                                       rogue_duration.label(proposal.get('duration')), scale=1.25, disabled=True))
+                                       duration, scale=1.25, disabled=True))
                 chosen = proposal['selection']
                 rows.append(self._item('rogue-objective', 'rogue-objective', 248, 208, 1000, 70,
-                                       f"Finish P{proposal['target_position']} or better", disabled=True))
+                                       rogue.objective_label(proposal), disabled=True))
                 for card in self._cards(chosen):
                     car = card['id'] == 'car'
                     card.update(id='rogue-car' if car else 'rogue-track', x=248 if car else 756,
-                                y=296, w=492, h=236, synthesis_card=True, disabled=True)
+                                y=296, w=492, h=190, synthesis_card=True, disabled=True)
                     rows.append(card)
+                car_row = dict(id=chosen['car'])
+                rows.append(self._item('rogue-favorite', 'button', 248, 494, 240, 34,
+                                       'Remove from favorites' if chosen['car'] in self.favorite_cars else 'Add to favorites',
+                                       disabled=self.session_running))
+                rows.append(self._blacklist_button(car_row, rogue=True, kind='cars'))
+                track_row = dict(id=chosen['track'], layout=chosen.get('layout', ''))
+                rows.append(self._item('rogue-track-favorite', 'button', 756, 494, 240, 34,
+                                       'Remove from favorites' if (track_row['id'], track_row['layout']) in self.favorite_tracks else 'Add to favorites',
+                                       disabled=self.session_running))
+                rows.append(self._blacklist_button(track_row, rogue=True, kind='tracks'))
                 minutes = chosen['time_minutes']
+                conditions = (f"{chosen['laps']} {'lap' if chosen['laps'] == 1 else 'laps'}   /   {chosen['opponents']} opponents   /   AI {chosen['ai']}%"
+                              if mode == 2 else content.MODES[mode][0]+'   /   Solo')
                 rows.append(self._item('rogue-conditions', 'rogue-conditions', 248, 550, 1000, 30,
-                                       f"{chosen['laps']} {'lap' if chosen['laps'] == 1 else 'laps'}   /   {chosen['opponents']} opponents   /   AI {chosen['ai']}%   /   {minutes//60:02}:{minutes%60:02}   /   {chosen['weather'].replace('_', ' ').title()}",
+                                       f"{conditions}   /   {minutes//60:02}:{minutes%60:02}   /   {chosen['weather'].replace('_', ' ').title()}",
                                        scale=1.65, color=(228, 226, 217), disabled=True))
                 rows += self.rogue_mastery_items(chosen, profile)
             else:
@@ -198,6 +216,9 @@ class RogueUI(RogueResultUI, RogueRewardsUI):
         if self.game is None:
             self.message = 'The installed game is required to create a Rogue challenge.'
             return
+        if self.blacklist_error:
+            self.message = 'Blacklist unavailable. Recover it in the catalogue.'
+            return
         self.rogue_store.start_run(deepcopy(self.selection), mode=mode)
         self._rogue_announced = None
         self.rogue_result = self.rogue_last_result = None
@@ -221,19 +242,24 @@ class RogueUI(RogueResultUI, RogueRewardsUI):
             self.open_key()
             self.message = 'Save your API key, then generate the next challenge explicitly.'
             return False
+        if self.blacklist_error:
+            self.message = 'Blacklist unavailable. Recover it in the catalogue.'
+            return False
+        blocked = tuple(self.blacklist['cars'])
+        blocked_tracks = deepcopy(self.blacklist['tracks'])
         snapshot = deepcopy(run)
         profile = deepcopy(self.rogue_state['profile'])
         timings = rogue_duration.load(self.synthesis_store)
         if run['mode'] != 'ai':
             try:
-                proposal, catalog = rogue_generator.generate(self.game, snapshot, profile, catalog=self.catalog, timings=timings)
+                proposal, catalog = rogue_generator.generate(self.game, snapshot, profile, catalog=self.catalog, timings=timings, blocked=blocked, blocked_tracks=blocked_tracks)
                 self.rogue_store.set_challenge(proposal)
                 self.replace_catalog(catalog)
                 self.message = 'Rogue challenge ready. Finish the target position or better.'
                 self.focus_id = 'start'
                 return True
             except (OSError, ValueError, RuntimeError, TypeError):
-                self.message = 'Could not prepare this Rogue challenge. Run kept; check installed content.'
+                self.message = 'Could not prepare this Rogue challenge. Run kept; check installed content and blacklist.'
                 return False
         if self.ai_pending is not None:
             self.message = 'Wait for the Event Synthetizer request before generating with AI.'
@@ -245,7 +271,7 @@ class RogueUI(RogueResultUI, RogueRewardsUI):
         def work():
             try:
                 future.set_result(rogue_generator.generate(game, snapshot, profile,
-                                                          catalog=catalog, api_key=key, effort=effort, timings=timings))
+                                                          catalog=catalog, api_key=key, effort=effort, timings=timings, blocked=blocked, blocked_tracks=blocked_tracks))
             except Exception:
                 future.set_exception(ValueError('Rogue generation failed. Run kept; try again explicitly.'))
         try:
@@ -293,12 +319,55 @@ class RogueUI(RogueResultUI, RogueRewardsUI):
             return True
         if not identity.startswith('rogue-'):
             return False
-        if identity == 'rogue-new-local':
+        if identity in ('rogue-favorite', 'rogue-track-favorite'):
+            run = self.rogue_run or {}
+            proposal = run.get('challenge')
+            if proposal and not self.session_running:
+                if self.favorites_error:
+                    self.message = 'Favorites unavailable. Recover them in the catalogue.'
+                else:
+                    selected = proposal['selection']
+                    kind = 'tracks' if identity == 'rogue-track-favorite' else 'cars'
+                    row = dict(id=selected['track'], layout=selected.get('layout', '')) if kind == 'tracks' else dict(id=selected['car'])
+                    changed = favorites.toggle(self.favorites, kind, row)
+                    try:
+                        if self.favorites_path is not None:changed=favorites.save(self.favorites_path, changed)
+                    except (OSError, ValueError, RuntimeError, TypeError):
+                        self.message='Could not save favorites. Previous favorite kept.'
+                        return True
+                    self._set_favorites(changed)
+                    self.favorites_revision+=1
+                    self.message='Favorite saved.' if favorites.contains(changed,kind,row) else 'Favorite removed.'
+        elif identity in ('rogue-blacklist', 'rogue-track-blacklist'):
+            run = self.rogue_run or {}
+            proposal = run.get('challenge')
+            if proposal and not self.session_running:
+                selected = proposal['selection']
+                if identity == 'rogue-track-blacklist':
+                    self._toggle_blacklist(dict(id=selected['track'],layout=selected.get('layout','')),kind='tracks')
+                else:
+                    self._toggle_blacklist(dict(id=selected['car']),kind='cars')
+        elif identity == 'rogue-new-local':
             self.new_rogue_run('deterministic')
         elif identity == 'rogue-new-ai':
             self.new_rogue_run('ai')
         elif identity == 'rogue-next':
             self.generate_rogue_challenge()
+        elif identity == 'rogue-skip':
+            run = self.rogue_run or {}
+            proposal = run.get('challenge')
+            if (not self.session_running and self.rogue_pending is None and not self.rogue_error
+                    and self.rogue_store is not None and run.get('status') == 'active'
+                    and proposal and run.get('lives', 0) > 0):
+                try:
+                    self.rogue_store.skip_challenge(run['id'], proposal['challenge_id'])
+                except (OSError, ValueError, RuntimeError, TypeError):
+                    self.refresh_rogue(announce=False)
+                    self.message = 'Could not skip this event. Check the current Rogue data.'
+                    return True
+                self.rogue_result = self.rogue_last_result = None
+                self.message = 'Event skipped. One spare life used. Choose the next challenge.'
+                self.focus_id = 'rogue-next'
         elif identity == 'rogue-cancel':
             self.cancel_rogue_generation()
         elif identity == 'rogue-album':

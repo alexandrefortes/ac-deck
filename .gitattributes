@@ -1,0 +1,10 @@
+# Preserve the original notice bytes recorded in the dependency inventory.
+/licenses/dependency-notices/** -text
+# The source companion embeds and hashes this exact inventory document.
+/licenses/dependency-sources.json -text
+
+/src/** -text
+/scripts/** -text
+/tests/** -text
+/public-source-manifest.json -text
+/community-changes-manifest.json -text

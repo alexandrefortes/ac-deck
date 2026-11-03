@@ -1,0 +1,89 @@
+{
+  "base_manifest": "public-source-manifest.json",
+  "files": [
+    {
+      "export_sha256": "82ad86736d1fe3d4d1f72338832e24b0bd8d3ccf734e080ab67fc9d08b7940cb",
+      "origin_community_sha256": "e5f0e0648a641488a87a99a9001582580d5bc5a6dd7fabe3a81a4f4e7db2f3f0",
+      "origin_community_size_bytes": 30180,
+      "path": "scripts/build_launcher_linux.py",
+      "sha256": "88db1d9fa0d98b1d9f46958fac89c1371648ea1861d03dc750cdde8d007108a7",
+      "size_bytes": 32188,
+      "status": "absorbed"
+    },
+    {
+      "export_sha256": null,
+      "origin_community_sha256": "20d5ef2603b13984df3af9fe36c8bc75f9585a5de8431ac240b22452506c555b",
+      "origin_community_size_bytes": 12178,
+      "path": "scripts/install_ac_deck.py",
+      "sha256": "263a563f54bfadad0ff3d4b47bcf01ac285c0092fb3ab74407cc71436e437cda",
+      "size_bytes": 18609,
+      "status": "absorbed"
+    },
+    {
+      "export_sha256": "f435013bf5745b210bec0a69a9e06f835028ac2b79a95c8344be00b1662896ad",
+      "origin_community_sha256": "bbe402fca773028907e75a6c10c5b20981f5728f988837e50435f4db7a5e8f68",
+      "origin_community_size_bytes": 33728,
+      "path": "src/launcher/application.py",
+      "sha256": "3208bbeb6fcdce414a1842a33bab90130ac66352c9bcfeec19c753b805009500",
+      "size_bytes": 35970,
+      "status": "absorbed"
+    },
+    {
+      "export_sha256": "20f13766bdf2cca4b64d5570c5469206afd0f5e986b42cd0feab9c99b325af51",
+      "origin_community_sha256": "f768a5904ea570d860461b037aff434ccdef8753c397c72539d333dc4c0f5188",
+      "origin_community_size_bytes": 30942,
+      "path": "src/launcher/csp.py",
+      "sha256": "80bb9d56a5fab3055c5a58de6cda2bf54b41b542f7c20e52c93c376612743802",
+      "size_bytes": 31001,
+      "status": "absorbed"
+    },
+    {
+      "export_sha256": null,
+      "origin_community_sha256": "316faad303f27631d7d63b37dc29fa329c2759f88e6d2cedd612ba2d29aab986",
+      "origin_community_size_bytes": 2674,
+      "path": "src/launcher/community_download.py",
+      "sha256": "316faad303f27631d7d63b37dc29fa329c2759f88e6d2cedd612ba2d29aab986",
+      "size_bytes": 2674,
+      "status": "absorbed"
+    },
+    {
+      "export_sha256": null,
+      "origin_community_sha256": "f72cee14d5efc66e2d27471507a82f7b1f36d54b89c27ddbc4bdcc7e59672dbc",
+      "origin_community_size_bytes": 11547,
+      "path": "src/launcher/community_install.py",
+      "sha256": "279486757e62fba1c397c41d8b55c6a10f6065ed02e88085a6692f62bc0f7ccb",
+      "size_bytes": 14664,
+      "status": "absorbed"
+    },
+    {
+      "export_sha256": null,
+      "origin_community_sha256": "8d46d274555e4c5f41e2b6d34866211220796301ba8c8490d6c5b53ae1be8844",
+      "origin_community_size_bytes": 7128,
+      "path": "src/launcher/install_discovery.py",
+      "sha256": "df26b8e2c1648bcfe157f11f9f12343bc2b04a4f53d42d83a9c42859f0b8b0d6",
+      "size_bytes": 7066,
+      "status": "absorbed"
+    },
+    {
+      "export_sha256": null,
+      "origin_community_sha256": "02bcc5530d539fcc58cdd38bc663f5b40ca73f66d50c6571b89bacfd5f38af3b",
+      "origin_community_size_bytes": 17100,
+      "path": "src/launcher/steam_install_options.py",
+      "sha256": "74ccd0ff1fe458ccb15a04883a3f84cf774f3cb4a9bbcecaed12673512853c0f",
+      "size_bytes": 20309,
+      "status": "absorbed"
+    }
+  ],
+  "reconciliation": {
+    "canonical_source_commit": "60bf9de196a7ccc27b5019c43370c3d309c451cf",
+    "pending_shared_differences": [],
+    "previous_source_commit": "5daf0c8f5db3789d288e8572f087c645121995b3",
+    "previous_source_manifest_sha256": "1b5197bdb538a4784ad8fe1bac64d19b5b99e8b80f0aac7e608cc1f8af48cecb",
+    "reviewed_plan_sha256": "4da31995225259c613aece3682fe2013a8bcaf7a40f827b42a70c1f57e613228",
+    "source_manifest_sha256": "592b0bb8c3b3fd18533330ac98f47384d899ac58bb2a3e882b78c6d3e3f60898",
+    "source_tree": "working-tree",
+    "status": "absorbed"
+  },
+  "schema_version": 1,
+  "scope": "Original community installer deltas preserved with provenance; current bytes absorbed into canonical working-tree export"
+}

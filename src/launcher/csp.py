@@ -18,15 +18,24 @@ import uuid
 import zipfile
 
 from . import file_io as safe
-from . import controls, installed, graphics, graphics_settings, comfort, chase_camera
+from . import controls, installed, graphics, graphics_settings, comfort, chase_camera, gamepad_fx, proximity_alert
 
-VERSION = '0.3.0-preview728'
-BUILD_CODE = 4263
-ARCHIVE_SHA256 = 'b645eb1faa8291f538cda56dca17aa4e09ebe1bd8be23e8ce0f2dfef209034d9'
-URL = 'mods/lights-patch-v0.3.0-preview728-full.zip'
-PREVIOUS_VERSION = '0.2.11'
-PREVIOUS_ARCHIVE_SHA256 = '0729ccaebb403a7a6d1c40516990da8116cb5f56eea4c1fe0bdd29863a5a6ffb'
-AI_LABELS = {'original': 'Original', 'improved': 'Improved (CSP)'}
+VERSION = '0.3.1'
+BUILD_CODE = 4302
+ARCHIVE_SHA256 = 'f7b157edeacaaa4ff89af3b416af0acf5216fcee40631425ce5c7cf263e3f5a1'
+URL = 'https://acstuff.club/patch/?get=0.3.1'
+PREVIOUS_VERSION = '0.3.0-preview728'
+PREVIOUS_ARCHIVE_SHA256 = 'b645eb1faa8291f538cda56dca17aa4e09ebe1bd8be23e8ce0f2dfef209034d9'
+PREVIOUS_RELEASES = {PREVIOUS_ARCHIVE_SHA256: PREVIOUS_VERSION,
+                     '2551975ad902deca0a4f3764a7ee154109a4c7e5198fef5ae499deaf77753747': '0.3.0',
+                     '0729ccaebb403a7a6d1c40516990da8116cb5f56eea4c1fe0bdd29863a5a6ffb': '0.2.11'}
+
+
+def _known_previous(version, archive_sha256):
+    return (isinstance(archive_sha256, str) and archive_sha256 in PREVIOUS_RELEASES
+            and PREVIOUS_RELEASES[archive_sha256] == version)
+
+
 COMMON = {
     'general.ini': {'BASIC': {'ENABLED': '1'}, 'OPTIMIZATIONS': {'CACHE_ACS': '1'},
                     'OPTIMIZATIONS_GPU': {'OPTIMIZE_MESHES':'1',
@@ -73,11 +82,13 @@ COMMON = {
     'track_adjustments.ini': {'MISCELLANEOUS': {'USE_FLAGS_CLOTH': '0'}},
     'new_behaviour.ini': {
         'AI2': {'ENABLED': '0'},
-        'AI_TWEAKS': {'FIX_SHORT_AXLE': '1', 'FIX_LOW_LEVEL': '1', 'START_REDUCE_REDLINING': '1',
+        'AI_TWEAKS': {'NEW_LATERAL_GRIP_ESTIMATION': '1', 'FIX_GRIP_MULT': '1',
+                      'NEW_AI_SMOOTHING': '1', 'ADJUST_SHIFTING_FOR_SLOW': '1',
+                      'FIX_SHORT_AXLE': '1', 'FIX_LOW_LEVEL': '1', 'START_REDUCE_REDLINING': '1',
                       'START_STRAIGHTEN_TRAJECTORY': '1', 'CAUTIOUS_STEERING': '1',
                       'REMOVE_STEER_LOOKAHEAD_SPEED_LIMIT': '1',
                       'ACT_IMPATIENT': '1', 'TRAJECTORIES_FOR_DUMMIES': '1',
-                      'FIX_UPSHIFT_THRESHOLD': '0', 'FIX_DOWNSHIFT_THRESHOLD': '0',
+                      'FIX_UPSHIFT_THRESHOLD': '1', 'FIX_DOWNSHIFT_THRESHOLD': '0',
                       'STOP_TELEPORTING_STUCK': '1'},
         'AI_FLOOD': {'ENABLED': '0'},
         'WRONG_WAY': {'ALLOW_IN_PRACTICE': '0', 'ALLOW_IN_TRACKDAY': '0'},
@@ -111,13 +122,9 @@ def parser(raw=''):
     return ini
 
 
-def overrides(profile, control_mode, ai_behavior='improved', ai_experimental=False):
+def overrides(profile, control_mode):
     graphics.base_profile(profile)
     controls.validate(dict(control_mode=control_mode))
-    if ai_behavior not in AI_LABELS:
-        raise ValueError('Modo de IA CSP desconhecido')
-    if type(ai_experimental) is not bool:
-        raise ValueError('Experimental AI must be On or Off')
     result = {name: {section: dict(values) for section, values in sections.items()}
               for name, sections in COMMON.items()}
     # Base CSP comum aos dois perfis. Quality difere nos ajustes nativos.
@@ -135,8 +142,8 @@ def overrides(profile, control_mode, ai_behavior='improved', ai_experimental=Fal
     result['weather_fx.ini']['PERFORMANCE'].update(
         HIGH_QUALITY_STARS='0', EXTRA_CLOUDS_FIDELITY='0')
     result['gamepad_fx.ini']['JOYPAD_ASSIST']['ENABLED'] = '1' if control_mode == 'assisted' else '0'
-    result['new_behaviour.ini']['BASIC'] = {'ENABLED':'1' if ai_behavior == 'improved' else '0'}
-    result['new_behaviour.ini']['AI2']['ENABLED'] = '1' if ai_behavior == 'improved' and ai_experimental else '0'
+    result['new_behaviour.ini']['BASIC'] = {'ENABLED':'1'}
+    result['new_behaviour.ini']['AI2']['ENABLED'] = '0'
     return result
 
 
@@ -175,8 +182,8 @@ def unpack(archive, destination):
         raise ValueError('ZIP CSP mudou durante a cópia')
     manifest = dict(schema_version=1, version=VERSION, archive_sha256=expected,
                     source_url=URL, files=rows,
-                    provenance='Arquivo Patreon fornecido pelo usuário via Git LFS; '
-                               'SHA-256 confere o objeto recebido, sem assinatura independente')
+                    provenance='Arquivo público do site oficial; SHA-256 confere o objeto recebido, '
+                               'sem assinatura ou checksum independente')
     safe.write_new_json(destination/'manifest.json', manifest)
     check_profiles(destination)
     return manifest
@@ -333,21 +340,22 @@ def _restore(package):
     pending = current if current.get('status') == 'installing' and current.get('previous') else None
     if pending is not None:
         previous = pending['previous']
-        if (current.get('version') != PREVIOUS_VERSION
-                or current.get('archive_sha256') != PREVIOUS_ARCHIVE_SHA256):
+        rollback_hash = current.get('archive_sha256')
+        if not _known_previous(current.get('version'), rollback_hash):
             raise ValueError('Conclua a atualização CSP antes de reverter')
     else:
         previous = current
+        rollback_hash = current.get('rollback')
         if (current.get('status') != 'ready' or current.get('version') != VERSION
                 or current.get('archive_sha256') != ARCHIVE_SHA256
-                or current.get('rollback') != PREVIOUS_ARCHIVE_SHA256):
+                or not isinstance(rollback_hash, str) or rollback_hash not in PREVIOUS_RELEASES):
             raise ValueError('Não há backup CSP anterior reconhecido')
     if (previous.get('version') != VERSION or previous.get('archive_sha256') != ARCHIVE_SHA256):
         raise ValueError('Instalação CSP atual desconhecida; preserve o lote')
-    backup = package/'launcher/csp-backups'/PREVIOUS_ARCHIVE_SHA256
+    backup = package/'launcher/csp-backups'/rollback_hash
     manifest = safe.read_json(backup/'manifest.json')
-    if (manifest.get('version') != PREVIOUS_VERSION
-            or manifest.get('archive_sha256') != PREVIOUS_ARCHIVE_SHA256):
+    if (manifest.get('version') != PREVIOUS_RELEASES[rollback_hash]
+            or manifest.get('archive_sha256') != rollback_hash):
         raise ValueError('Backup CSP anterior desconhecido')
     for name, row in _managed_rows(manifest).items():
         if digest(backup/name) != row['sha256']:
@@ -388,15 +396,14 @@ def install(payload, package):
     existing_receipt = receipt.exists()
     if existing_receipt:
         data = safe.read_json(receipt)
-        if (data.get('status') == 'ready' and data.get('version') == PREVIOUS_VERSION
-                and data.get('archive_sha256') == PREVIOUS_ARCHIVE_SHA256):
+        if (data.get('status') == 'ready'
+                and _known_previous(data.get('version'), data.get('archive_sha256'))):
             return _replace(payload, package, manifest, data)
         if (data.get('status') == 'installing' and data.get('previous')
                 and data.get('version') == VERSION and data.get('archive_sha256') == ARCHIVE_SHA256
                 and data.get('files') == manifest['files']):
             previous = data['previous']
-            if (previous.get('version') != PREVIOUS_VERSION
-                    or previous.get('archive_sha256') != PREVIOUS_ARCHIVE_SHA256):
+            if not _known_previous(previous.get('version'), previous.get('archive_sha256')):
                 raise ValueError('Instalação CSP anterior desconhecida; preserve o lote')
             return _replace(payload, package, manifest, previous, pending=data)
         if (data.get('status') not in ('installing', 'ready')
@@ -406,11 +413,8 @@ def install(payload, package):
         if data.get('files') != manifest['files']:
             raise ValueError('Seleção CSP diverge do recibo')
     else:
-        for name in ('dwrite.dll', 'extension'):
-            path = game/name
-            safe.check_components(path)
-            if path.exists():
-                raise ValueError('CSP desconhecido já presente no jogo declarado: '+name)
+        # Arquivos da versão fixada podem vir de outra instalação legítima.
+        # A conferência abaixo adota só bytes idênticos e conserva outros mods.
         data = dict(manifest, status='installing', installed_utc=datetime.now(timezone.utc).isoformat())
     missing = []
     # Conferir todos os arquivos antes de escrever, inclusive na retomada.
@@ -421,6 +425,8 @@ def install(payload, package):
         if not path.exists():
             missing.append(row)
         elif digest(path) != row['sha256']:
+            if not existing_receipt:
+                raise ValueError('CSP desconhecido já presente no jogo declarado: '+row['path'])
             raise ValueError('Arquivo CSP instalado mudou; preserve-o: '+row['path'])
 
     def save_receipt():
@@ -488,25 +494,36 @@ def config_roots(game, environment, explicit=None, *, native_cfg=None):
     return roots
 
 
-def plan_settings(game, selection, roots, *, weather_style='base'):
-    if weather_style not in ('base', 'old_man_linear_inline'):
-        raise ValueError('Unknown Weather FX style')
+def plan_settings(game, selection, roots, *, proximity_session=''):
     controls.validate(selection)
-    settings = overrides(selection.get('graphics_profile', 'performance'),
-                         selection.get('control_mode', 'assisted'),selection.get('ai_behavior','improved'),
-                         selection.get('ai_experimental',False))
+    gamepad_fx.require_installed(game, selection)
+    proximity_alert.validate(selection)
+    settings = overrides(selection.get('graphics_profile', 'csp_performance'),
+                         selection.get('control_mode', 'assisted'))
+    settings[proximity_alert.CONFIG] = {'SETTINGS': {
+        'ENABLED': '1' if selection.get('proximity_alert', True) else '0',
+        'LATERAL_RANGE': str(selection.get('proximity_lateral_range', proximity_alert.DEFAULTS['proximity_lateral_range'])),
+        'REAR_RANGE': str(selection.get('proximity_rear_range', proximity_alert.DEFAULTS['proximity_rear_range'])),
+        'SESSION_TOKEN': proximity_session,
+        'EDITED': '0',
+    }}
+    settings['gamepad_fx.ini']['JOYPAD_ASSIST']['IMPLEMENTATION'] = selection.get(
+        'gamepad_script', gamepad_fx.DEFAULT_SCRIPT)
     enabled=selection.get('smart_shadows', False)
     if type(enabled) is not bool:
         raise ValueError('Smart Shadows must be On or Off')
     settings['smart_shadows.ini']['BASIC']['ENABLED'] = '1' if enabled else '0'
     settings['smart_shadows.ini']['BASIC']['AUTOMATIC_SPLITS_DISTANCE'] = str(graphics.shadow_distance(selection))
-    settings['weather_fx.ini']['BASIC']['IMPLEMENTATION'] = weather_style
     comfort.apply_csp(settings, selection)
     chase_camera.apply_csp(settings, selection)
     graphics_settings.apply_csp(settings, selection)
     rows = []
     for index, root in enumerate(roots):
-        for name, sections in settings.items():
+        config = dict(settings)
+        if (selection.get('gamepad_script', gamepad_fx.DEFAULT_SCRIPT) == gamepad_fx.AGA
+                or (Path(root)/gamepad_fx.CONFIG).exists()):
+            config[gamepad_fx.CONFIG] = gamepad_fx.bridge_section(selection)
+        for name, sections in config.items():
             path = Path(root)/name
             safe.check_components(path)
             before = None
@@ -530,7 +547,7 @@ def plan_settings(game, selection, roots, *, weather_style='base'):
                              name=f'{index}-{name}'))
         # Cor linear permanece desativada, inclusive para seleções antigas.
         # Caminho declarado por __PLUGIN_SETTINGS do CSP selecionado.
-        path = Path(root)/f'state/lua/wfx_impl/{weather_style}__settings.ini'
+        path = Path(root)/'state/lua/wfx_impl/base__settings.ini'
         safe.check_components(path)
         before = None
         if path.exists():
@@ -543,7 +560,7 @@ def plan_settings(game, selection, roots, *, weather_style='base'):
         stream = io.StringIO()
         ini.write(stream, space_around_delimiters=False)
         rows.append(dict(path=path, previous=before, data=stream.getvalue().encode('utf-8'),
-                         name=f'{index}-wfx-{weather_style}__settings.ini'))
+                         name=f'{index}-wfx-base__settings.ini'))
         for relative, sections in chase_camera.script_settings(selection).items():
             path=Path(root)/relative
             safe.check_components(path)

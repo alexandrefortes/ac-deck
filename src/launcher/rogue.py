@@ -57,15 +57,46 @@ def _selection(value):
         raise ValueError('Invalid Rogue race configuration.')
     for key in ('car', 'track', 'skin'):
         _identity(value.get(key))
-    content.identifier(value.get('layout', ''), empty=True)
-    _integer(value.get('mode'), 2, 2)
+    content.layout_identifier(value.get('layout', ''), empty=True)
+    mode = _integer(value.get('mode'), 1, 4)
     if value.get('event', '') != '':
         raise ValueError('Rogue requires a standalone race.')
-    _integer(value.get('opponents'), 1, 47)
+    _integer(value.get('opponents'), 1 if mode == 2 else 0, 47 if mode == 2 else 0)
     _integer(value.get('laps'), 1, 99)
     _integer(value.get('ai'), 70, 100)
     _integer(value.get('time_minutes'), 480, 960)
     return value
+
+
+def _objective(value, selection):
+    if selection['mode'] == 2:
+        _integer(value.get('target_position'), 1, selection['opponents'] + 1)
+        return
+    objective = value.get('objective')
+    kind = 'time' if selection['mode'] == 1 else 'points'
+    if not isinstance(objective, dict) or set(objective) != {'kind', 'target'} or objective['kind'] != kind:
+        raise ValueError('Invalid Rogue objective.')
+    _integer(objective['target'], 1, 2147483647)
+
+
+def format_value(kind, value):
+    if value is None:
+        return '--'
+    if kind == 'time':
+        minutes, remainder = divmod(value, 60000)
+        seconds, millis = divmod(remainder, 1000)
+        return f'{minutes}:{seconds:02}.{millis:03}'
+    return f'{value:,} points'
+
+
+def objective_label(challenge):
+    selection = challenge['selection']
+    if selection['mode'] == 2:
+        return f"Finish P{challenge['target_position']} or better"
+    objective = challenge['objective']
+    name = content.MODES[selection['mode']][0]
+    comparison = 'or faster' if objective['kind'] == 'time' else 'or more'
+    return f"{name} / {format_value(objective['kind'], objective['target'])} {comparison}"
 
 
 def _challenge(value, stage=None):
@@ -76,7 +107,7 @@ def _challenge(value, stage=None):
     if stage is not None and value['stage'] != stage:
         raise ValueError('Rogue challenge belongs to another stage.')
     selection = _selection(value.get('selection'))
-    _integer(value.get('target_position'), 1, selection['opponents'] + 1)
+    _objective(value, selection)
     if not isinstance(value.get('base'), dict):
         raise ValueError('Rogue challenge base is missing.')
     if value.get('generator') not in ('deterministic', 'ai'):
@@ -117,7 +148,7 @@ def clean(value=None):
                     raise ValueError('Invalid Rogue track XP identity.')
                 track, layout = identity.split('|')
                 _identity(track)
-                content.identifier(layout, empty=True)
+                content.layout_identifier(layout, empty=True)
             _integer(amount)
     _integer(profile.get('best_wins'))
     if (not isinstance(profile.get('badges'), list)
@@ -125,8 +156,7 @@ def clean(value=None):
             or len(set(profile['badges'])) != len(profile['badges'])
             or any(identity not in {row[0] for row in _BADGES} for identity in profile['badges'])):
         raise ValueError('Invalid Rogue album.')
-    # Legado 079–081 não possui stickers. IDs presentes são validados antes de
-    # qualquer backfill; conteúdo desconhecido bloqueia sem descartar o original.
+    # Conteúdo desconhecido bloqueia sem descartar o original.
     profile['stickers'] = rogue_rewards.validate_sticker_ids(profile.get('stickers', []))
     receipts = profile.get('processed_sessions')
     if not isinstance(receipts, dict):
@@ -167,7 +197,7 @@ def clean(value=None):
                 raise ValueError('Invalid Rogue challenge history.')
             _identity(row.get('car'))
             _identity(row.get('track'))
-            content.identifier(row.get('layout', ''), empty=True)
+            content.layout_identifier(row.get('layout', ''), empty=True)
             _identity(row.get('challenge_id'))
         if not isinstance(run.get('rewarded_badges'), list):
             raise ValueError('Invalid Rogue badge rewards.')
@@ -192,7 +222,7 @@ def clean(value=None):
             _identity(attempt.get('session_id'))
             _identity(attempt.get('challenge_id'))
             _selection(attempt.get('selection'))
-            _integer(attempt.get('target_position'), 1, attempt['selection']['opponents'] + 1)
+            _objective(attempt, attempt['selection'])
             _sticker_outcome(attempt.get('outcome'))
         pending = run.get('pending_attempt')
         if pending is not None and (not isinstance(pending, str) or pending not in run['attempts']
@@ -200,9 +230,6 @@ def clean(value=None):
             raise ValueError('Invalid pending Rogue attempt.')
     # Strict encoding also rejects non-finite values in retained proposal fields.
     json.dumps(value, allow_nan=False)
-    # Migração pura: XP já adquirido revela cosméticos, nunca vidas ou marcos de
-    # sequência. load() não grava; a próxima mutação usa o save atômico normal.
-    profile['stickers'].extend(rogue_rewards.newly_unlocked(profile, owned=profile['stickers']))
     return value
 
 
@@ -459,16 +486,19 @@ def _active(state):
     return run
 
 
-def _summary(run, status, *, attempt=None, position=None, xp=0, badges=(), stickers=(), reason=''):
-    return dict(status=status, attempt_id=attempt['id'] if attempt else None,
+def _summary(run, status, *, attempt=None, position=None, value=None, xp=0, badges=(), stickers=(), reason=''):
+    summary = dict(status=status, attempt_id=attempt['id'] if attempt else None,
                 challenge_id=attempt['challenge_id'] if attempt else None,
-                position=position, target_position=attempt['target_position'] if attempt else None,
+                position=position, target_position=attempt.get('target_position') if attempt else None,
                 xp_awarded=xp, lives=run['lives'], streak=run['streak'], wins=run['wins'],
                 new_badges=list(badges), new_stickers=list(stickers), reason=reason,
                 message={'won': 'Challenge won. Progress saved.',
                          'lost': 'Challenge lost. Continue to the next event.' if run['status'] == 'active' and run.get('challenge') is None else 'Challenge lost. Retry the same event.' if run['status'] == 'active' else 'Run ended. Your XP and achievements are kept.',
                          'unconfirmed': 'Result not confirmed. The same challenge is kept; no life was lost.',
                          'start_failed': 'Race could not start. The same challenge is kept; no life was lost.'}[status])
+    if attempt and attempt['selection']['mode'] != 2:
+        summary.update(objective=deepcopy(attempt['objective']), value=value)
+    return summary
 
 
 def _outcome(attempt, record):
@@ -490,7 +520,9 @@ def _outcome(attempt, record):
     if (not isinstance(expected.get('cars'), list) or len(expected['cars']) != selection['opponents'] + 1
             or expected['cars'][0] != selection['car']):
         raise ValueError('Rogue result grid differs from the challenge.')
-    if expected.get('sessions') != [dict(type=3, target_laps=selection['laps'])]:
+    kind = content.MODES[selection['mode']][1]
+    target_laps = selection['laps'] if kind == 3 else 0
+    if expected.get('sessions') != [dict(type=kind, target_laps=target_laps)]:
         raise ValueError('Rogue result laps differ from the challenge.')
     if any(result.get(key, '') != selection.get(key, '') for key in ('car', 'track', 'layout')):
         raise ValueError('Rogue result identity differs from the challenge.')
@@ -498,12 +530,22 @@ def _outcome(attempt, record):
     if not isinstance(sessions, list) or len(sessions) != 1 or not isinstance(sessions[0], dict):
         raise ValueError('Rogue result race is missing.')
     row = sessions[0]
-    if (type(row.get('type')) is not int or row['type'] != 3
-            or type(row.get('target_laps')) is not int or row['target_laps'] != selection['laps']):
+    if (type(row.get('type')) is not int or row['type'] != kind
+            or type(row.get('target_laps')) is not int
+            or kind == 3 and row['target_laps'] != selection['laps']):
         raise ValueError('Rogue result race differs from the challenge.')
     # Only an explicit cancellation is evidence for a failed, unfinished race.
     if row.get('race_completed') is False and row.get('completion_evidence') == 'explicit_cancelled':
         return 'lost', None
+    if kind != 3:
+        if row.get('race_completed') is False:
+            return 'unconfirmed', None
+        value = row.get('objective_value')
+        if type(value) is not int or not 0 < value <= 2147483647:
+            return 'unconfirmed', None
+        objective = attempt['objective']
+        won = value <= objective['target'] if objective['kind'] == 'time' else value >= objective['target']
+        return ('won' if won else 'lost'), value
     if row.get('race_completed') is not True:
         return 'unconfirmed', None
     witnessed = (row.get('completion_evidence') == 'csp_player_finished'
@@ -521,6 +563,8 @@ def _outcome_reason(status, record):
     reason = record.get('reason', '')
     if status == 'unconfirmed' and record.get('status') == 'imported':
         row = record['result']['sessions'][0]
+        if row.get('type') in (4, 5, 6):
+            return 'objective_missing'
         if row.get('race_completed') is not True:
             return 'finish_not_confirmed'
         if (row.get('completion_evidence') not in ('player_lap_target_reached', 'csp_player_finished')
@@ -614,6 +658,30 @@ class Store:
             return proposal
         return self._change(change)
 
+    def skip_challenge(self, run_id, challenge_id):
+        def change(state):
+            run = _active(state)
+            challenge = run['challenge']
+            if run['id'] != run_id or challenge is None or challenge['challenge_id'] != challenge_id:
+                raise ValueError('Rogue challenge changed. No life was spent.')
+            if run['lives'] == 0:
+                raise ValueError('No spare lives available.')
+            pending = run['pending_attempt']
+            if pending is not None:
+                previous = run['attempts'][pending]
+                previous['status'] = 'finished'
+                previous['outcome'] = _summary(run, 'unconfirmed', attempt=previous, reason='attempt_interrupted')
+                state['profile']['processed_sessions'][previous['session_id']] = previous['outcome']
+                run['pending_attempt'] = None
+            run['lives'] -= 1
+            run['streak'] = 0
+            run['last_challenge'] = deepcopy(challenge)
+            run['challenge'] = None
+            run['stage'] = challenge['stage'] + 1
+            run['last_outcome'] = None
+            return run
+        return self._change(change)
+
     def begin_attempt(self, selection, *, session_id=None):
         selection = deepcopy(selection)
         def change(state):
@@ -637,7 +705,11 @@ class Store:
                 state['profile']['processed_sessions'][previous['session_id']] = previous['outcome']
             attempt = dict(id=identity, run_id=run['id'], challenge_id=challenge['challenge_id'],
                            session_id=session, selection=deepcopy(challenge['selection']),
-                           target_position=challenge['target_position'], status='pending', started_utc=_now())
+                           status='pending', started_utc=_now())
+            if challenge['selection']['mode'] == 2:
+                attempt['target_position'] = challenge['target_position']
+            else:
+                attempt['objective'] = deepcopy(challenge['objective'])
             run['attempts'][identity] = attempt
             run['pending_attempt'] = identity
             return attempt
@@ -661,10 +733,11 @@ class Store:
             challenge = run['challenge']
             if challenge is None or challenge['challenge_id'] != attempt['challenge_id']:
                 raise ValueError('Rogue attempt challenge differs.')
-            status, position = _outcome(attempt, record)
+            status, value = _outcome(attempt, record)
+            position = value if attempt['selection']['mode'] == 2 else None
             profile, xp, new_badges = state['profile'], 0, []
             if status in ('won', 'lost'):
-                target_xp = XP_PER_CHALLENGE if status == 'won' else PARTIAL_XP if position is not None else 0
+                target_xp = XP_PER_CHALLENGE if status == 'won' else PARTIAL_XP if value is not None else 0
                 xp = max(0, target_xp - run.get('challenge_xp', 0))
                 run['challenge_xp'] = max(run.get('challenge_xp', 0), target_xp)
                 selection = attempt['selection']
@@ -690,7 +763,7 @@ class Store:
                     run['streak'] = 0
                     if run['lives'] > 0:
                         run['lives'] -= 1
-                        if position is not None:
+                        if value is not None:
                             run['last_challenge'] = deepcopy(challenge)
                             run['challenge'] = None
                             run['stage'] = challenge['stage'] + 1
@@ -698,12 +771,14 @@ class Store:
                         run['status'] = 'ended'
                 run['history'].append(dict(car=selection['car'], track=selection['track'],
                     layout=selection.get('layout', ''), class_id=challenge.get('class_id'), position=position,
-                    target_position=attempt['target_position'], won=status == 'won', stage=challenge['stage'],
+                    target_position=attempt.get('target_position'), won=status == 'won', stage=challenge['stage'],
                     challenge_id=challenge['challenge_id']))
+                if selection['mode'] != 2:
+                    run['history'][-1].update(mode=selection['mode'], objective=deepcopy(attempt['objective']), value=value)
                 run['history'] = run['history'][-100:]
             new_stickers = rogue_rewards.newly_unlocked(profile, owned=profile['stickers'])
             profile['stickers'].extend(new_stickers)
-            outcome = _summary(run, status, attempt=attempt, position=position, xp=xp,
+            outcome = _summary(run, status, attempt=attempt, position=position, value=value, xp=xp,
                                badges=new_badges, stickers=new_stickers, reason=_outcome_reason(status, record))
             outcome['stage'] = challenge['stage']
             attempt.update(status='finished', outcome=outcome, ended_utc=_now(),

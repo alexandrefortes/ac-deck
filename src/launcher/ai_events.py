@@ -318,7 +318,7 @@ def request(body, key):
 
 
 def generate(game, base, key, *, effort=EFFORT, fixed=None, results=(), transport=None,
-             catalog=None, preferences=None, previous=None, current=None,usage_path=None,usage_state=None,session_request='',instruction=None):
+             catalog=None, preferences=None, previous=None, current=None,usage_path=None,usage_state=None,session_request='',instruction=None,blocked=(),blocked_tracks=()):
     api_credentials.validate(key)
     instruction=clean_instruction(instruction)
     catalog = events.discover(game) if catalog is None else catalog
@@ -332,15 +332,16 @@ def generate(game, base, key, *, effort=EFFORT, fixed=None, results=(), transpor
                 and previous.get('ai_level_source')=='suggested'
                 and previous.get('selection',{}).get('ai')==base['ai'])
     try:
-        events.candidates(catalog,base,fixed)
+        eligible_catalog=events.without_blacklisted(catalog,blocked,fixed,blocked_tracks=blocked_tracks)
+        events.candidates(eligible_catalog,base,fixed)
     except ValueError:
-        raise AIError('No compatible installed candidates. No API request was sent.') from None
+        raise AIError('No compatible candidates. Check the blacklist and fixed car/track. No API request was sent.') from None
     try:
-        supplied,policy,_=ai_usage.prepare(usage_path,catalog,base,fixed=fixed,previous=previous,state=usage_state)
+        supplied,policy,_=ai_usage.prepare(usage_path,eligible_catalog,base,fixed=fixed,previous=previous,state=usage_state)
     except (OSError,ValueError,RuntimeError):
         raise AIError('AI usage controls unavailable. No request was sent; previous event kept.') from None
     body = payload(supplied, base, effort, fixed=fixed, results=results,
-                   preferences=preferences,difficulty_used=used,current=current,availability=policy['info'],current_catalog=catalog,
+                   preferences=preferences,difficulty_used=used,current=current,availability=policy['info'],current_catalog=eligible_catalog,
                    session_request=session_request,instruction=instruction)
     started = time.monotonic()
     response = (transport or request)(body, key)
@@ -398,7 +399,7 @@ def generate(game, base, key, *, effort=EFFORT, fixed=None, results=(), transpor
         stage='catalog'
         catalog = events.discover(game)
         bounds = body['text']['format']['schema']['properties']['proposal']['anyOf'][0]['properties']['ai_level']
-        eligible=ai_usage.restrict(catalog,policy['allowed']['car'],policy['allowed']['track'])
+        eligible=ai_usage.restrict(events.without_blacklisted(catalog,blocked,fixed,blocked_tracks=blocked_tracks),policy['allowed']['car'],policy['allowed']['track'])
         events.candidates(eligible,base,fixed)
         stage='choices'
         composed = ai_recomposition.compose(game, result, eligible, base, fixed=fixed,

@@ -34,7 +34,7 @@ def validate(selection):
             raise ValueError('Stability control must be an integer from 0 to 100')
     damage = selection.get('car_damage_pct')
     if damage is not None and (type(damage) is not int or not 0 <= damage <= 100):
-        raise ValueError('Car damage must be an integer from 0 to 100 or Keep current')
+        raise ValueError('Car damage must be an integer from 0 to 100')
     if 'csp_ui_scale' in selection:
         value = selection['csp_ui_scale']
         if type(value) not in (int, float) or value not in SCALES:

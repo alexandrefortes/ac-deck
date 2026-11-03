@@ -17,3 +17,6 @@ __pycache__/
 **/launcher/ai-usage.json
 **/launcher/ai-report.json
 *.tar.gz
+
+# Original source recipe required by the dependency inventory.
+!/licenses/dependency-notices/vendor-source-recipes/xau/libXau.spec

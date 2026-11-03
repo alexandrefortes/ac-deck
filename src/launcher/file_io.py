@@ -13,6 +13,7 @@ import json
 import os
 from pathlib import Path, PureWindowsPath
 import stat
+import sys
 
 
 REPARSE_POINT = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
@@ -53,6 +54,35 @@ def inside(path: Path, root: Path) -> bool:
         return True
     except ValueError:
         return False
+
+
+def rename_new(source: Path, destination: Path) -> None:
+    """Publica arquivo ou diretório sem substituir um destino concorrente."""
+    source, destination = absolute(source), absolute(destination)
+    check_components(source)
+    check_components(destination)
+    info = source.lstat()
+    if not stat.S_ISDIR(info.st_mode):
+        require_reference(info, source)
+    if sys.platform == 'win32':
+        os.rename(source, destination)  # Windows refuses an existing destination.
+        return
+    if sys.platform != 'linux':
+        raise SafetyError('Exclusive publication requires Linux renameat2; staged data was preserved')
+    import ctypes
+    import errno
+    libc = ctypes.CDLL(None, use_errno=True)
+    try:
+        rename = libc.renameat2
+    except AttributeError as error:
+        raise SafetyError('Linux renameat2 is unavailable; staged data was preserved') from error
+    rename.argtypes = (ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p, ctypes.c_uint)
+    rename.restype = ctypes.c_int
+    if rename(-100, os.fsencode(source), -100, os.fsencode(destination), 1) != 0:
+        code = ctypes.get_errno()
+        if code in (errno.ENOSYS, errno.EINVAL, errno.ENOTSUP):
+            raise SafetyError('Linux filesystem cannot publish exclusively with renameat2; staged data was preserved')
+        raise OSError(code, os.strerror(code), str(destination))
 
 
 def source_root(path: str | Path) -> Path:

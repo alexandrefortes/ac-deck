@@ -5,7 +5,6 @@ somente renderização; física, controles, câmeras e assistências são separa
 """
 from copy import deepcopy
 
-VERSION = 2
 NATIVE = (('msaa', 'MSAA', 'VIDEO', 'AASAMPLES', ('1', '2', '4', '8')),
  ('anisotropic', 'Anisotropic filtering', 'VIDEO', 'ANISOTROPIC', ('0', '2', '4', '8', '16')),
  ('shadow_resolution', 'Shadow resolution', 'VIDEO', 'SHADOW_MAP_SIZE',
@@ -157,12 +156,7 @@ CSP = (('csp_general_optimizations_cache_acs', 'CSP asset cache', 'general.ini',
   'SKIP_FRAMES', ('0', '1', '2', '3')))
 
 FIELDS = {row[0]: row for row in (*NATIVE, *CSP)}
-REMOVED_FIELDS = {'csp_general_optimizations_gpu_optimize_meshes_more',
-                  'csp_general_fps_limit_tweaks_use_adjusted_frame_time',
-                  'csp_general_fps_limit_tweaks_use_sleep',
-                  'csp_graphics_adjustments_basic_enabled', 'csp_lighting_fx_basic_enabled'}
-PREFERENCE_KEYS = ('graphics_profile', 'graphics_preset_revision', 'graphics_profiles_version',
-                   'graphics_options', 'graphics_options_profile', 'graphics_options_version',
+PREFERENCE_KEYS = ('graphics_profile', 'graphics_options', 'graphics_options_profile',
                    'smart_shadows', 'shadow_distance_m', 'resolution', 'hud', 'pp_filter',
                    'frame_limiter')
 
@@ -174,48 +168,36 @@ def defaults(profile):
                    graphics.CSP_PROFILES[graphics.base_profile(profile)] if graphics.uses_csp(profile) else {}):
         for section, values in source.items():
             native.setdefault(section, {}).update(values)
-    patched = csp.overrides(profile, 'original', 'original')
+    patched = csp.overrides(profile, 'original')
     result = {name: native[section][key] for name, label, section, key, choices in NATIVE}
     result.update({name: patched[file][section][key] for name, label, file, section, key, choices in CSP})
     return result
 
 
 def values(selection):
-    profile = selection.get('graphics_profile', 'performance')
+    profile = selection.get('graphics_profile', 'csp_performance')
     result = defaults(profile)
     custom = selection.get('graphics_options', {})
     if not isinstance(custom, dict):
         raise ValueError('Graphics values must be an object')
-    custom = {name: value for name, value in custom.items() if name not in REMOVED_FIELDS}
     if selection.get('graphics_options_profile', profile) != profile:
         return result
-    if set(custom)-FIELDS.keys():
-        raise ValueError('Unknown graphics option')
+    custom = {name: value for name, value in custom.items() if name in FIELDS}
     for name, value in custom.items():
         if type(value) is not str or value not in FIELDS[name][-1]:
             raise ValueError('Invalid graphics value: '+FIELDS[name][1])
     result.update(custom)
-    if profile == 'csp_performance' and selection.get('graphics_options_version', 1) == 1:
-        # Atualiza somente os antigos padrões; conserva os demais ajustes salvos.
-        for name, previous, current in (('depth_of_field', '3', '0'),
-                ('motion_blur', '12', '0'),
-                ('csp_general_optimizations_cache_acs', '0', '1'),
-                ('csp_general_optimizations_gpu_deduplicate_textures', '0', '1'),
-                ('csp_general_optimizations_gpu_query_based_mapping', '0', '1')):
-            if custom.get(name) == previous:
-                result[name] = current
     return result
 
 
 def normalize(selection, profile):
     result = deepcopy(selection)
-    if not any(key in result for key in ('graphics_options', 'graphics_options_profile', 'graphics_options_version')):
+    if not any(key in result for key in ('graphics_options', 'graphics_options_profile')):
         return result
     changed = result.get('graphics_options_profile', profile) != profile
     selected = dict(result, graphics_profile=profile)
     result['graphics_options'] = defaults(profile) if changed else values(selected)
     result['graphics_options_profile'] = profile
-    result['graphics_options_version'] = VERSION
     if changed:
         from . import graphics
         result.update(smart_shadows=False, shadow_distance_m=graphics.profile_shadow_distance(profile))
@@ -225,7 +207,7 @@ def normalize(selection, profile):
 def reset(selection, profile):
     from . import graphics
     selection.update(graphics_options=defaults(profile), graphics_options_profile=profile,
-                     graphics_options_version=VERSION, smart_shadows=False,
+                     smart_shadows=False,
                      shadow_distance_m=graphics.profile_shadow_distance(profile))
 
 
@@ -269,8 +251,7 @@ def change(selection, name, delta):
     current = values(selection)
     choices = FIELDS[name][-1]
     current[name] = choices[(choices.index(current[name])+delta)%len(choices)]
-    selection.update(graphics_options=current, graphics_options_profile=selection['graphics_profile'],
-                     graphics_options_version=VERSION)
+    selection.update(graphics_options=current, graphics_options_profile=selection['graphics_profile'])
 
 
 def apply_native(video, selection):

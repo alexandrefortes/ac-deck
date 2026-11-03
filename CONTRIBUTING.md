@@ -1,61 +1,92 @@
 # Contributing to ac-deck
 
-Source is available in this repository under [PolyForm Noncommercial 1.0.0](LICENSE), with a reviewed launcher export, community builder, synthetic tests and interface previews. An experimental runtime preview and its dependency sources are available on the [preview branch](https://github.com/alexandrefortes/ac-deck/tree/community-preview-001). Physical Steam Deck validation has not yet been performed.
+ac-deck is a Python/SDL2 launcher around original Assetto Corsa on Steam Deck.
+The [v0.1.0-preview.1 release](https://github.com/alexandrefortes/ac-deck/releases/tag/v0.1.0-preview.1)
+provides an experimental installer/runtime and corresponding dependency
+sources. Physical Deck behavior remains untested. Players use the
+[installation guide](docs/installation.md) without an SDK or source checkout.
 
-## Useful contributions now
+## Contributions and reports
 
-- Correct confusing documentation and broken links.
-- Identify missing installation or update information from a new user's perspective.
-- Report a preview's readability or navigation problem with the screen and image resolution.
-- Propose a focused improvement to the Steam Deck single-player experience.
+Use [GitHub issues](https://github.com/alexandrefortes/ac-deck/issues) for bugs,
+questions and proposals. Documentation corrections, reproducible installation
+reports and focused navigation/control improvements are useful. Include exact
+source/package version, SteamOS/Proton versions, expected behavior and sanitized
+error/reproduction steps. Follow [troubleshooting](docs/troubleshooting.md).
+Remove credentials, account details, private paths and unnecessary player data.
+Distinguish synthetic/offscreen observations from actual Steam Deck use.
 
-Use [GitHub issues](https://github.com/alexandrefortes/ac-deck/issues) for questions, bug reports and feature proposals. Small documentation corrections can be submitted as a focused pull request.
+## Source and distribution
 
-## Reporting a problem
+`ac-deck-dev` is canonical development; `ac-deck` is the curated community
+distribution. Contributors need no private access. Shared launcher changes
+are reviewed and reconciled with the canonical tree before export; public
+docs, licenses, issues and releases retain distribution ownership. Preserve
+community work and public ancestry.
 
-Follow [troubleshooting](docs/troubleshooting.md). Include a reproducible example, the affected page or exact runtime version, and expected versus actual behavior. Identify whether the evidence comes from a demonstration preview, an automated check or real Steam Deck use.
+Implementation belongs in `src/launcher/`. Keep `scripts/jogo_deck.py` and
+`scripts/pratica_deck.py` stable; runtime modules do not import development
+scripts or investigation models. The [export inventory](public-source-manifest.json)
+records selected sources and actual hashes. The [change inventory](community-changes-manifest.json)
+retains original deltas and their absorption, not another implementation.
+A working-tree base identifies provenance; it does not claim uncommitted bytes
+are contained in that base commit.
 
-Remove credentials, account details and private paths from screenshots and logs. Include only the files needed to understand the report.
+## Code checks
 
-## Code contributions and checks
-
-Production code belongs in `src/launcher/`. `scripts/jogo_deck.py` and `scripts/pratica_deck.py` are stable command entrypoints. The [source inventory](public-source-manifest.json) records the selected export; the repository does not include unrelated private history.
-
-Use Python **3.13.5** and install the [hash-pinned dependencies](scripts/launcher-linux-requirements.txt) into an explicit local virtual environment, as shown in the [source build guide](docs/installation.md#building-from-source).
-
-From the repository root, run the public test selection:
+Use Python 3.13.5 and [pinned requirements](scripts/launcher-linux-requirements.txt)
+in a reviewed persistent [SDK](docs/community-sdk.md) or explicit development
+environment. From the public root:
 
 ```sh
 python -B -m unittest discover -s tests -v
-```
-
-This selection checks filesystem safety, pure INI/session contracts, command entrypoints and the community builder's payload boundary. Its fixtures are authored demonstration data. The builder tests simulate compilation and do not establish real packaged or Steam Deck behavior.
-
-Safe command-line checks are also available:
-
-```sh
 python -B scripts/jogo_deck.py --help
 python -B scripts/pratica_deck.py --help
 python -B scripts/build_launcher_linux.py --help
 ```
 
-Compile the community profile with the real builder documented in the [installation guide](docs/installation.md#building-from-source). Its native-library, font and license-notice paths are explicit inputs; the builder does not download or install them. Use `--community` for the public candidate.
+Run affected tests while editing and the full public selection before
+integration. Fixtures are synthetic; private tests/assets are not prerequisites.
+Builder unit tests simulate compilation. A real candidate separately needs the
+[delivery cycle](docs/community-delivery.md), matching frozen sources,
+SDK/native/font/notice inputs and compiled verification. The compiled receipt
+separates two source-only child-interpreter fixtures from archived-code tests;
+preserve that evidence boundary.
 
-For code changes:
+Keep changes focused and document behavior/ownership changes. Preserve exclusive
+writes, atomic recovery, locks, filesystem checks, existing attachments,
+Steam/Proton data and progression. Only the player opens Steam/the launcher and
+starts races unless explicitly requested. Do not activate monitors or paid
+services by inference; automated checks use synthetic/offscreen behavior.
 
-1. Start with a concrete behavior or ownership problem and keep the change focused.
-2. Preserve existing game attachments, player data, Steam/Proton integration and explicit player control over race starts.
-3. Run the affected tests and the public selection above. Report failures, skips and the tested Python/platform accurately.
-4. Describe the change, its verification and any remaining Steam Deck validation in the pull request.
+## Licenses and third-party material
 
-## Licensing and third-party material
+Project-owned code uses [PolyForm Noncommercial 1.0.0](LICENSE); its full text
+defines permitted purposes, stated personal/organizational uses, notice duties
+and fair-use provisions. Dependencies retain their own terms; purpose
+restrictions do not supersede their modification/replacement or other rights.
+Keep original notices and identify contribution provenance and permissions.
 
-Project-owned code uses [PolyForm Noncommercial License 1.0.0](LICENSE), a source-available license with purpose restrictions. The full license defines permitted noncommercial purposes and specified personal uses without anticipated commercial application. It also permits use by charitable organizations, educational institutions, public research organizations, public safety or health organizations, environmental protection organizations and government institutions regardless of funding source or obligations resulting from that funding. Fair-use rights remain unaffected. Preserve the license terms and any required notices when distributing covered material.
+The interpreter excludes Berkeley DB/GDBM. Follow the exact
+[dependency review](docs/dependency-license-review.md),
+[sources/replacement instructions](docs/dependency-sources.md) and
+[third-party notices](THIRD_PARTY_NOTICES.md#binary-distribution-review) for
+binaries. Source access covers the matching release, not an unrelated older
+archive. Preserve the PyInstaller exception, LGPL rights and selected
+FTL/BSD/AFL routes within their stated scopes.
 
-Contributions must identify their provenance and applicable permissions. Game/DLC files, Steam data, CSP archives, credentials, private session records and unreviewed third-party mod/media payloads are outside the public distribution. Software licenses do not automatically grant rights to unrelated images or audio.
+Game/DLCs, Steam/Proton, CSP archives, credentials, private history and unreviewed
+mod/media are outside the public payload. CSP downloads separately from its
+official source; optional cameras may require the author's account and exact
+archive. Software licenses do not grant unrelated photo, voice or music rights.
+The [content review](docs/content-rights.md) covers specified quotations and
+jurisdictions; current gallery PNGs are omitted.
 
-Dependencies keep their own licenses; PolyForm does not replace them. When distributing a compiled candidate, follow the [bundled-library review](THIRD_PARTY_NOTICES.md#binary-distribution-review), including the applicable LGPL requirements and corresponding sources.
+## Release evidence
 
-## Public release review
-
-Source, package, documentation and screenshots have separate review and publication states. Follow the [community release checklist](docs/community-release-checklist.md). The source license is selected; an experimental binary preview is available; physical Steam Deck validation remains separate. Source tests, simulated builds and screenshots do not establish physical Steam Deck support.
+Use the [preview/supported-release checklist](docs/community-release-checklist.md).
+Each immutable candidate identifies sources, runtime, notices, companion,
+checksums and promotion result. Tests, publication and physical acceptance
+remain distinct. The updater has an [unchanged-product/Python contract](docs/update-and-recovery.md),
+not a general migration mechanism. Do not replace older release bytes or claim
+physical support from screenshots or automated checks.

@@ -17,7 +17,7 @@ BINDINGS = {
 BUTTONS = {'A':'A', 'B':'B', 'X':'X', 'Y':'Y', 'LSHOULDER':'LB',
            'RSHOULDER':'RB', 'BACK':'View', '-1':'Unbound'}
 DEFAULTS = dict(hide_driver_arms=True, virtual_steer_degrees=160,
-                steer_deadzone_pct=0, steer_gamma_tenths=None, controls_version=1,
+                steer_deadzone_pct=0, steer_gamma_tenths=None,
                 **{key:row[2] for key,row in BINDINGS.items()})
 
 

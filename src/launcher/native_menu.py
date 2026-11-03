@@ -8,7 +8,7 @@ from copy import deepcopy
 from datetime import datetime, timezone
 from pathlib import Path
 
-from . import content, event_synthetizer, graphics, previews, controls, comfort, chase_camera, ai_events, driving_haptics
+from . import content, event_synthetizer, graphics, previews, controls, comfort, chase_camera, gamepad_fx, ai_events, driving_haptics, proximity_alert
 from .window import Menu
 from . import ai_usage
 from . import session_settings, catalogue, favorites
@@ -46,6 +46,7 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
         self.brand_state = None
         self.content_filter = catalogue.clean_filter({})
         self.favorites_only = False
+        self.blacklist_only = False
         self.favorites_path = favorites.path_for(self.synthesis_store) if self.synthesis_store else None
         self.favorites_error = False
         self.favorites_revision = 0
@@ -56,6 +57,15 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
             except (OSError, ValueError, RuntimeError, TypeError):
                 self.favorites_error = True
                 self.message = 'Favorites unavailable. Original file kept; use Recover favorites.'
+        self.blacklist_path = Path(self.synthesis_store).parent/'blacklist.json' if self.synthesis_store else None
+        self.blacklist = favorites.clean()
+        self.blacklist_error = False
+        if self.blacklist_path is not None:
+            try:
+                self.blacklist = favorites.load(self.blacklist_path)
+            except (OSError, ValueError, RuntimeError, TypeError):
+                self.blacklist_error = True
+                self.message = 'Blacklist unavailable. Original file kept; recover it in the catalogue.'
         self.catalogue_panel = None
         self.browse_states = {}
         self.filter_cache = None
@@ -75,6 +85,8 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
         self.return_focus = 'car'
         self.editing = None
         self.session_running = False
+        self.event_result = None
+        self.event_session = None
         self.verdict_offset = 0
         self.ui_state_path = Path(self.synthesis_store).parent/'ui-state.json' if self.synthesis_store else None
         if self.ui_state_path is not None:
@@ -161,6 +173,8 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
         if self.overlay:
             return ('CONTENT' if self.overlay in ('cars','tracks','events') else 'SESSION',
                     self.overlay_title, self.message)
+        if self.event_result_visible():
+            return ('EVENT / SESSION RESULT', '', self.message)
         return {
             'drive': ('MANUAL SETUP', 'Your next drive.', self.message),
             'events': ('INSTALLED CAMPAIGNS', 'Choose your event.', self.message),
@@ -211,6 +225,8 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
                           **(dict(subtitle='Build your run') if view=='rogue' else {}),
                           selected=self.view==view) for index,(view,label) in enumerate(zip(VIEWS,LABELS))]
         rows.append(self._item('exit','button',1128,21,120,34,'Exit',disabled=self.session_running))
+        if self.event_result_visible():
+            return rows+[self._item('event-result-back','button',1032,708,216,52,'Back to event',primary=True)]
         if self.rogue_result_visible():
             return rows if self.overlay else rows+self.rogue_result_footer()
         blocked = (self.session_running or self.editing is not None or self.ai_panel is not None
@@ -221,7 +237,8 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
         rows += [self._item('details','button',884,708,130,52,'Session details',disabled=not bool(self.effective_selection())),
                  self._item('start','button',1034,708,214,52,
                             'Finishing session' if getattr(self,'session_ending',False) else
-                            'Session running' if self.session_running else 'Start race',disabled=blocked)]
+                            'Session running' if self.session_running else
+                            'Start' if self.source == 'rogue' and self.rogue_effective_selection().get('mode', 2) != 2 else 'Start race',disabled=blocked)]
         return rows
 
     def _cards(self, chosen):
@@ -299,15 +316,17 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
     def _setting_groups(self):
         result = {
             'graphics': [('Graphics & Display',[(4,i) for i in range(len(self.graphics_keys))])],
-            'controls': [('Controls',[])], 'assists': [('Driving Assists',[(3,7),(3,9)])],
+            'controls': [('Controls',[])], **({'gamepad': [('Gamepad FX',[])]} if self.csp else {}),
+            'assists': [('Driving Assists',[(3,7),(3,9)])],
             'camera': [('Camera & View',[])], 'interface': [('Race Interface',[])],
-            'opponents': [('Opponent AI',[(3,10),(3,11)] if self.csp else [])],
+            'opponents': [('Opponent AI',[])],
             'ai': [('AI',[])],
         }
         for index,key in enumerate(self.control_keys):
-            target = ('camera' if key in chase_camera.SETTINGS or key in ('hide_driver_arms','virtual_steer_degrees')
+            target = ('gamepad' if key == 'control_mode' or key in gamepad_fx.KEYS
+                      else 'camera' if key in chase_camera.SETTINGS or key in ('hide_driver_arms','virtual_steer_degrees')
                       else 'assists' if key in ('car_damage_pct','abs_mode','traction_control','stability_control')
-                      else 'interface' if key in comfort.SETTINGS else 'controls')
+                      else 'interface' if key == 'ghost' or key in comfort.SETTINGS or key in proximity_alert.DEFAULTS else 'controls')
             result[target][0][1].append((5,index))
         return result
 
@@ -321,6 +340,10 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
             return rows + self._overlay_items() + self._brand_items()
         if self.overlay:
             return self._editing_items(rows + self._overlay_items())
+        if self.event_result_visible():
+            return rows+[self._item('event-result-title','rogue-objective',248,166,1000,66,'SESSION ENDED',disabled=True),
+                         self._item('event-result-summary','text',248,248,1000,30,self.event_result['message'],disabled=True)
+                         ]+self.result_content_items(self.event_result['selection'], y=292, height=266)
         if self.view == 'drive':
             chosen = self.effective_selection()
             rows += self._cards(chosen)
@@ -370,11 +393,12 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
         elif self.view == 'settings':
             groups = self._setting_groups()
             for index,(key,group) in enumerate(groups.items()):
-                rows.append(self._item('category:'+key,'category',248,174+index*66,208,54,group[0][0],selected=self.category==key))
+                rows.append(self._item('category:'+key,'category',248,174+index*(58 if self.csp else 66),208,50 if self.csp else 54,group[0][0],selected=self.category==key))
             bindings=groups[self.category][0][1]
-            start=getattr(self,'settings_page',0)*6
-            for index,(tab,position) in enumerate(bindings[start:start+6]):
-                item=self._binding(tab,position,482,174+index*66,766,58)
+            page_size=7 if self.category=='gamepad' else 6
+            start=getattr(self,'settings_page',0)*page_size
+            for index,(tab,position) in enumerate(bindings[start:start+page_size]):
+                item=self._binding(tab,position,482,174+index*(58 if self.category=='gamepad' else 66),766,52 if self.category=='gamepad' else 58)
                 item['kind']='setting'
                 rows.append(item)
             if self.category == 'ai':
@@ -384,23 +408,30 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
                          self._item('model','text',500,464,720,28,'OpenAI / gpt-6-luna',disabled=True)]
                 rows.append(self._item('ai-options','button',482,506,766,54,'Main prompt / Custom prompt / Dictation'))
                 rows.append(self._item('ai-reset-usage','button',482,574,766,42,'Reset usage counters / keep history'))
-            if not bindings and self.category != 'ai':
+            if not bindings and self.category not in ('ai','opponents'):
                 rows.append(self._item('settings-empty','text',500,210,700,90,'No options for this profile.',disabled=True))
-            if len(bindings)>6:
+            if len(bindings)>page_size:
                 rows += [self._item('settings-prev','button',482,584,120,42,'L2 Previous'),
                          self._item('settings-next','button',1128,584,120,42,'Next R2')]
             if self.category=='graphics':
                 pages=max(1,(len(bindings)+5)//6)
-                rows.append(self._item('graphics-page','text',620,584,490,40,f"Graphics {getattr(self,'settings_page',0)+1} / {pages} · {('CSP active' if graphics.uses_csp(self.selection['graphics_profile']) else 'CSP inactive')}",disabled=True))
+                rows.append(self._item('graphics-page','text',620,584,490,40,f"Graphics {getattr(self,'settings_page',0)+1} / {pages} · CSP active",disabled=True))
                 rows.append(self._item('graphics-fixed','text',482,625,766,28,'Mirrors Off / Linear color Off',disabled=True))
             if self.category=='controls' and self.csp:
                 rows += [self._item('haptics_left','button',650,584,190,42,'Test left haptics',disabled=self.session_running),
                          self._item('haptics_right','button',860,584,190,42,'Test right haptics',disabled=self.session_running)]
+            if self.category=='gamepad':
+                pages=max(1,(len(bindings)+page_size-1)//page_size)
+                script=self.selection['gamepad_script']
+                status=('Script missing' if script not in self.gamepad_scripts else
+                        'Adjust AGA in its in-game app'
+                        if script==gamepad_fx.AGA else 'Select an installed script')
+                rows.append(self._item('gamepad-note','text',620,584,490,40,
+                    f'Gamepad FX {getattr(self,"settings_page",0)+1} / {pages} · {status}',disabled=True))
             if self.source=='generated' and self.category!='graphics':
                 rows.append(self._item('captured-base','text',482,638,760,28,'Race conditions stay fixed. All modes use your current preferences.',disabled=True))
-            if self.category=='opponents' and self.csp:
-                rows.append(self._item('opponent-ai-note','text',482,330,766,80,
-                    'Experimental AI requires Improved AI.\nBoth require a CSP graphics profile. Applies to all modes.',disabled=True))
+            if self.category=='opponents':
+                rows.append(self._item('opponent-ai-note','text',482,210,766,80,'Opponent AI: CSP Improved AI',disabled=True))
         elif self.view == 'history':
             if not self.history_rows:
                 rows.append(self._item('history-empty','text',270,230,930,100,'No sessions recorded yet.',
@@ -422,14 +453,16 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
         query=self.query.casefold().strip()
         selected=catalogue.clean_filter(self.content_filter)
         key=(len(values),query,self.brand_filter,selected['origin'],tuple(selected['tags']),selected['match'],
-             self.favorites_only,self.favorites_revision)
+             self.favorites_only,self.favorites_revision,self.blacklist_only,tuple(self.blacklist['cars']),
+             tuple((row['id'],row['layout']) for row in self.blacklist['tracks']))
         cached=self.filter_cache
         if cached is not None and cached[0] is self.catalog and cached[1] is values and cached[2]==key:
             return cached[3]
         result=[row for row in values if (not query or query in (' '.join(str(row.get(name,'')) for name in ('name','id','brand','country','layout','group','author'))).casefold())
                 and (not self.brand_filter or row.get('brand','')==self.brand_filter)
                 and catalogue.matches(row,selected)
-                and (not self.favorites_only or self._is_favorite(row))]
+                and (not self.favorites_only or self._is_favorite(row))
+                and (not self.blacklist_only or self._is_blacklisted(row))]
         self.filter_cache=(self.catalog,values,key,result)
         return result
 
@@ -442,6 +475,52 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
         if self.overlay == 'cars':return row['id'] in self.favorite_cars
         if self.overlay == 'tracks':return (row['id'],row.get('layout','')) in self.favorite_tracks
         return False
+
+    def _is_blacklisted(self, row, kind=None):
+        return favorites.contains(self.blacklist, kind or self.overlay, row)
+
+    def _blacklist_button(self, row, *, rogue=False, kind=None):
+        track = kind == 'tracks'
+        return self._item(('rogue-track-blacklist' if track else 'rogue-blacklist') if rogue else 'blacklist-toggle', 'button',
+            (1008 if track else 500) if rogue else 640, 494 if rogue else 642, 240 if rogue else 272, 34,
+            'Recover blacklist' if self.blacklist_error else
+            'Remove from blacklist' if row and self._is_blacklisted(row, kind) else 'Add to blacklist',
+            disabled=(rogue and self.session_running) or (not row and not self.blacklist_error))
+
+    def _toggle_blacklist(self, row, *, kind=None):
+        if self.blacklist_error:
+            if self.overlay in ('cars','tracks'):
+                self.catalogue_panel=dict(kind='blacklist-recovery', previous=self.catalogue_panel,
+                                          return_focus='blacklist-toggle')
+                self.focus_id='catalogue-back'
+            else:
+                self.message='Blacklist unavailable. Recover it in the catalogue.'
+            return
+        if row is None:return
+        kind=kind or self.overlay
+        changed=favorites.toggle(self.blacklist, kind, row)
+        try:
+            if self.blacklist_path is not None:changed=favorites.save(self.blacklist_path, changed)
+        except (OSError, ValueError, RuntimeError, TypeError):
+            self.message='Could not save blacklist. Previous list kept.'
+            return
+        self.blacklist=changed
+        if self.overlay in ('cars','tracks'):
+            previous=self.picker_index
+            values=self._filtered_content()
+            self.picker_index=next((i for i,item in enumerate(values) if (item['id'],item.get('layout',''))==(row['id'],row.get('layout',''))),
+                                   max(0,min(previous,len(values)-1)))
+            self.picker_page=self.picker_index//6
+            if self.catalogue_panel is not None:
+                self.catalogue_panel['return_focus']='pick:'+str(self.picker_index) if values else 'filter-open'
+            elif not values:self.focus_id='filter-open'
+            self._remember_picker()
+        pending=self.ai_pending is not None or self.rogue_pending is not None
+        self.ai_pending=None
+        self.rogue_pending=None
+        label='Car' if kind=='cars' else 'Track layout'
+        self.message=label+(' added to blacklist.' if favorites.contains(changed,kind,row) else ' removed from blacklist.')
+        if pending:self.message+=' Generation cancelled; an already sent request may be charged.'
 
     def _favorite_button(self, row):
         return self._item('favorite-toggle','button',268,642,360,34,
@@ -489,6 +568,7 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
         else:parts.append('All tags')
         if self.query:parts.append('Search: '+self.query)
         if self.favorites_only:parts.append('Favorites only')
+        if self.blacklist_only:parts.append('Blacklist only')
         return ' · '.join(parts)
 
     def _remember_picker(self):
@@ -496,7 +576,7 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
         values=self._filtered_content()
         row=values[min(self.picker_index,len(values)-1)] if values else {}
         self.browse_states[self.overlay]=dict(query=self.query,brand=self.brand_filter,
-            filters=deepcopy(self.content_filter),favorites_only=self.favorites_only,
+            filters=deepcopy(self.content_filter),favorites_only=self.favorites_only,blacklist_only=self.blacklist_only,
             identity=[row.get('id'),row.get('layout','')])
         self._remember_source()
 
@@ -507,6 +587,7 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
         self.brand_filter=catalogue.text(saved.get('brand')) if self.overlay=='cars' else ''
         self.content_filter=catalogue.clean_filter(saved.get('filters'))
         self.favorites_only=saved.get('favorites_only') is True and not self.favorites_error
+        self.blacklist_only=self.overlay in ('cars','tracks') and saved.get('blacklist_only') is True and not self.blacklist_error
         values=self._filtered_content()
         identity=saved.get('identity')
         self.picker_index=next((i for i,row in enumerate(values)
@@ -525,13 +606,13 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
         row=values[self.picker_index] if values else {}
         if kind=='detail' and not row:return
         self.catalogue_panel=dict(kind=kind,draft=deepcopy(self.content_filter),page=0,query='',
-            favorites_only=self.favorites_only,
+            favorites_only=self.favorites_only,blacklist_only=self.blacklist_only,
             row=deepcopy(row),return_focus='pick:'+str(self.picker_index) if kind=='detail' else 'filter-open')
         self.focus_id='filter-origin:all' if kind=='filters' else 'catalogue-back'
 
     def _close_catalogue_panel(self):
         self.search_edit_id=None
-        if self.catalogue_panel['kind']=='favorites-recovery':
+        if self.catalogue_panel['kind'] in ('favorites-recovery','blacklist-recovery'):
             panel=self.catalogue_panel
             self.catalogue_panel=panel['previous']
             self.focus_id=panel['return_focus']
@@ -560,6 +641,11 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
     def _catalogue_panel_items(self):
         panel=self.catalogue_panel
         rows=[self._item('catalogue-back','button',1120,98,110,38,'Back')]
+        if panel['kind']=='blacklist-recovery':
+            return rows+[
+                self._item('blacklist-warning','text',268,190,936,140,'Blacklist unavailable',
+                    value='Keep the original in a separate local file and start a new empty blacklist?',disabled=True),
+                self._item('blacklist-recover','button',268,400,440,46,'Back up and reset blacklist')]
         if panel['kind']=='favorites-recovery':
             return rows+[
                 self._item('favorites-warning','text',268,190,936,140,'Favorites unavailable',
@@ -586,6 +672,7 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
                      self._item('catalogue-origin-source','text',268,588,936,32,row.get('origin_source','Origin unavailable'),disabled=True),
                      self._item('catalogue-limit','text',268,614,936,24,'IDs classify content; installed files are not authenticated. Missing data stays unavailable.',disabled=True),
                      self._favorite_button(row)]
+            if self.overlay in ('cars','tracks'):rows.append(self._blacklist_button(row))
             return rows
         draft=panel['draft']
         for index,(value,label) in enumerate(catalogue.ORIGINS.items()):
@@ -594,6 +681,8 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
                  self._item('filter-any','button',508,230,224,42,'Match any selected tag',selected=draft['match']=='any'),
                  self._item('filter-favorites','button',748,230,224,42,'Favorites only: '+('On' if panel['favorites_only'] else 'Off'),
                             selected=panel['favorites_only'],disabled=self.favorites_error),
+                 self._item('filter-blacklist','button',988,230,216,42,'Blacklist only: '+('On' if panel['blacklist_only'] else 'Off'),
+                            selected=panel['blacklist_only'],disabled=self.blacklist_error) if self.overlay in ('cars','tracks') else
                  self._item('filter-selected','text',988,238,216,28,f"{len(draft['tags'])} tags selected",disabled=True),
                  self._item('tag-search','setting',268,286,936,42,'Search tags',
                             value=panel['query'] or ('Type to filter tags' if self.search_edit_id=='tag-search' else 'A / Enter to search tags'),
@@ -617,6 +706,17 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
         panel=self.catalogue_panel
         if identity=='catalogue-back':self._close_catalogue_panel()
         elif identity=='favorite-toggle':self._toggle_favorite()
+        elif identity=='blacklist-toggle' and panel['kind']=='detail':
+            self._toggle_blacklist(panel['row'])
+        elif identity=='blacklist-recover' and panel['kind']=='blacklist-recovery':
+            try:
+                self.blacklist=favorites.recover(self.blacklist_path, prefix='blacklist')
+            except (OSError,ValueError,RuntimeError,TypeError):
+                self.message='Could not recover blacklist. Original file kept.'
+                return
+            self.blacklist_error=False
+            self._close_catalogue_panel()
+            self.message='Original blacklist backed up. New empty list ready.'
         elif identity=='favorites-recover' and panel['kind']=='favorites-recovery':
             try:
                 value=favorites.recover(self.favorites_path)
@@ -632,6 +732,7 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
             draft=panel['draft']
             if identity=='tag-search':self.search_edit_id='tag-search'
             elif identity=='filter-favorites' and not self.favorites_error:panel['favorites_only']=not panel['favorites_only']
+            elif identity=='filter-blacklist' and not self.blacklist_error:panel['blacklist_only']=not panel['blacklist_only']
             elif identity.startswith('filter-origin:'):
                 draft['origin']=identity.split(':',1)[1]
             elif identity in ('filter-all','filter-any'):draft['match']=identity.split('-')[1]
@@ -646,10 +747,12 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
             elif identity=='filter-draft-reset':
                 panel['draft']=catalogue.clean_filter({})
                 panel['favorites_only']=False
+                panel['blacklist_only']=False
             elif identity=='filter-apply':
                 row=panel['row']
                 self.content_filter=catalogue.clean_filter(draft)
                 self.favorites_only=panel['favorites_only']
+                self.blacklist_only=panel['blacklist_only']
                 self._anchor_picker([row.get('id'),row.get('layout','')])
                 self._close_catalogue_panel()
                 self._remember_picker()
@@ -722,7 +825,7 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
                 value=self.query or ('Type to filter' if self.search_edit_id=='search' else 'A / Enter to search'),
                 editable=True,text_input=True,editing=self.search_edit_id=='search'))
             if extended:
-                active=(self.content_filter['origin']!='all')+len(self.content_filter['tags'])+self.favorites_only
+                active=(self.content_filter['origin']!='all')+len(self.content_filter['tags'])+self.favorites_only+self.blacklist_only
                 rows += [self._item('filter-open','button',620,98,150,38,f'Filters ({active})'),
                          self._item('filter-reset','button',784,98,138,38,'Clear filters'),
                          self._item('filter-count','text',936,106,176,28,f'{len(values)} results',disabled=True),
@@ -747,12 +850,15 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
                         *item.get('tags',[])]) if self.overlay=='cars' else item.get('layout',''),
                     compact_tags=self.overlay=='cars',
                     favorite=self._is_favorite(item),
+                    blacklisted=self._is_blacklisted(item),
                     image=self._image(chosen,kind),image_kind=kind,selected=self.picker_index==first+index))
             if not values:
                 rows.append(self._item('empty-catalogue','text',290,300,900,90,
+                    'No blacklisted content matches these filters.' if self.blacklist_only else
                     'No favorites match these filters.' if self.favorites_only else 'No matching content.',disabled=True))
             if extended:
                 rows.append(self._favorite_button(values[self.picker_index] if values else None))
+                if self.overlay in ('cars','tracks'):rows.append(self._blacklist_button(values[self.picker_index] if values else None))
             rows += [self._item('picker-prev','button',268,592,112,42,'L2 Previous'),
                      self._item('picker-next','button',1108,592,112,42,'Next R2')]
             if self.overlay=='cars' and values:
@@ -770,7 +876,7 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
             if self.source=='manual':
                 indices=[0,1,2,8]
                 if content.MODES[self.selection['mode']][1]==3:
-                    indices += [3,4,5]+([10] if self.csp else [])
+                    indices += [3,4,5]
                 elif self.selection['mode']==0:indices += [6]
                 for index,position in enumerate(indices):
                     rows.append(self._binding(3,position,268+(index%2)*480,170+(index//2)*94,454,78))
@@ -816,6 +922,7 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
         self.overlay=None
         source={'drive':'manual','events':'installed','synth':'generated','rogue':'rogue'}.get(view)
         if source:self.select_source(source)
+        if view=='settings':self.refresh_current_values()
         if view=='events':self.refresh_campaigns()
         if view=='rogue':self.refresh_rogue()
         self.focus_id=('car' if view=='drive' else 'generate' if view=='synth' else
@@ -864,6 +971,7 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
         self.query=self.brand_filter=''
         self.content_filter=catalogue.clean_filter({})
         self.favorites_only=False
+        self.blacklist_only=False
         shown=self.synthesis['selection'] if self.view=='synth' and self.synthesis else self.effective_selection()
         entries=self.catalog['cars' if kind=='car' else 'tracks']
         self.picker_index=next((index for index,item in enumerate(entries) if item['id']==shown.get(kind)
@@ -1018,7 +1126,8 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
                    and self.source=='installed' and self.installed_selection is not None)
         selected=self.installed_selection if installed else self.selection
         draft=Menu(self.catalog,deepcopy(selected),csp=self.csp,game=self.game,
-                   catalog_cache=self.catalog_cache,pp_filter_cache=self.pp_filters)
+                   catalog_cache=self.catalog_cache,pp_filter_cache=self.pp_filters,
+                   current_values=self.current_values)
         draft.event_options=deepcopy(self.event_options)
         draft.synthesis=deepcopy(self.synthesis)
         draft.pending_event_base=deepcopy(self.pending_event_base)
@@ -1249,6 +1358,20 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
                 self.message='AI event ready in Event Synthetizer.'+(' '+adjustments if adjustments else '')
             self._remember_source()
 
+    def event_session_started(self, chosen):
+        self.event_session = (dict(selection=deepcopy(chosen), view=self.view)
+                              if self.source in ('generated', 'installed') else None)
+
+    def event_session_finished(self, message):
+        if self.event_session is not None:
+            self.event_result = dict(self.event_session, message=message)
+            self.event_session = None
+            self.message = ''
+            if self.event_result_visible():self.focus_id = 'event-result-back'
+
+    def event_result_visible(self):
+        return self.event_result is not None and self.view == self.event_result['view'] and not self.overlay
+
     def launch_selection(self):
         if self.source=='rogue':return self.rogue_launch_selection()
         if self.source=='generated':
@@ -1265,18 +1388,28 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
 
     def _activate(self, identity, delta=1):
         if self.ai_panel is not None:return self.ai_settings_activate(identity)
+        if self.event_result_visible():
+            if identity == 'event-result-back':
+                self.event_result = None
+                self.focus_id = 'start'
+                return
+            if self.result_content_activate(identity, self.event_result['selection']):return
         if self.rogue_activate(identity):return
         if self._campaign_activate(identity):return
         if self.catalogue_panel is not None:return self._activate_catalogue(identity)
         if identity=='filter-open':return self._open_catalogue_panel('filters')
         if identity=='content-info':return self._open_catalogue_panel('detail')
         if identity=='favorite-toggle':return self._toggle_favorite()
+        if identity=='blacklist-toggle' and self.overlay in ('cars','tracks'):
+            values=self._filtered_content()
+            return self._toggle_blacklist(values[self.picker_index] if values else None)
         if identity=='filter-reset':
             values=self._filtered_content()
             row=values[self.picker_index] if values else {}
             self.query=self.brand_filter=''
             self.content_filter=catalogue.clean_filter({})
             self.favorites_only=False
+            self.blacklist_only=False
             self._anchor_picker([row.get('id'),row.get('layout','')])
             self._remember_picker()
             self.focus_id='filter-open'
@@ -1307,6 +1440,8 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
         elif identity.startswith('category:'):
             self.category=identity.split(':',1)[1]
             self.settings_page=0
+            self.refresh_current_values()
+            if self.category=='gamepad':self.gamepad_scripts=gamepad_fx.scripts(self.game)
         elif identity.startswith('session-') and self.activate_session_prompt(identity,delta):return
         elif identity=='generate':self.generate_event()
         elif identity=='generate-ai':self.generate_ai_event()
@@ -1350,7 +1485,8 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
             self.history_page=(self.history_page+(-1 if identity.endswith('prev') else 1))%pages
         elif identity in ('settings-prev','settings-next'):
             count=len(self._setting_groups()[self.category][0][1])
-            self.settings_page=(getattr(self,'settings_page',0)+(-1 if identity.endswith('prev') else 1))%max(1,(count+5)//6)
+            page_size=7 if self.category=='gamepad' else 6
+            self.settings_page=(getattr(self,'settings_page',0)+(-1 if identity.endswith('prev') else 1))%max(1,(count+page_size-1)//page_size)
 
     def _move_focus(self, direction):
         self.search_edit_id=None
@@ -1384,6 +1520,9 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
             return self.ai_settings_action(action)
         if self.session_prompt_action(action):return
         if self.rogue_result_action(action):return
+        if self.event_result_visible() and action in ('back', 'launch'):
+            if action == 'back':self._activate('event-result-back')
+            return
         if self.rogue_album_action(action):return
         if self.search_edit_id is not None and self.searching and action in ('accept','back'):
             self.search_edit_id=None

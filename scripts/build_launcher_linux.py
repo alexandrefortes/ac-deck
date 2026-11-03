@@ -19,11 +19,13 @@ import stat
 import subprocess
 import sys
 import tarfile
+import time
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 from src.launcher import csp, font_support, gt5_camera, bacc_camera
+from src.launcher import file_io as safe
 
 SOURCES = ('scripts/jogo_deck.py', 'scripts/pratica_deck.py',
            'scripts/inventario_importacao.py', 'src/launcher/__init__.py',
@@ -38,7 +40,7 @@ SOURCES = ('scripts/jogo_deck.py', 'scripts/pratica_deck.py',
            'src/launcher/rogue_toasty.py', 'src/launcher/rogue_toasty_app.py',
            'src/launcher/rogue_toasty_assets.py',
            'src/launcher/session_settings.py', 'src/launcher/session_process.py',
-           'src/launcher/graphics.py', 'src/launcher/graphics_settings.py', 'src/launcher/controls.py', 'src/launcher/csp.py',
+           'src/launcher/graphics.py', 'src/launcher/graphics_settings.py', 'src/launcher/controls.py', 'src/launcher/csp.py', 'src/launcher/gamepad_fx.py', 'src/launcher/current_settings.py',
            'src/launcher/installed.py', 'src/launcher/previews.py',
            'src/launcher/diagnostics.py',
            'src/launcher/font_support.py',
@@ -49,17 +51,20 @@ SOURCES = ('scripts/jogo_deck.py', 'scripts/pratica_deck.py',
            'src/launcher/ai_settings_ui.py', 'src/launcher/session_prompt.py', 'src/launcher/ai_usage.py', 'src/launcher/ai_report.py',
            'src/launcher/semantic_catalogue.py', 'src/launcher/dictation.py',
            'src/launcher/results.py', 'src/launcher/history_retention.py',
-           'src/launcher/linear_gamma.py',
            'src/launcher/comfort.py',
            'src/launcher/chase_camera.py', 'src/launcher/hud_cleanup.py', 'src/launcher/gt5_camera.py',
            'src/launcher/bacc_camera.py',
            'src/launcher/driving_haptics.py', 'src/launcher/driving_haptics_app.py',
+           'src/launcher/proximity_alert.py', 'src/launcher/proximity_preferences.py',
            'licenses/ACC-DualSense-Feedback.txt',
            'src/launcher/practice_session.py', 'src/launcher/assists_config.py',
            'src/launcher/application.py', 'src/launcher/game_config.py',
+           'src/launcher/community_download.py', 'src/launcher/community_install.py',
+           'src/launcher/install_discovery.py', 'src/launcher/steam_install_options.py',
            'src/launcher/package_setup.py', 'src/launcher/steam.py', 'src/launcher/file_io.py',
            'scripts/build_launcher_linux.py')
 COMMUNITY_SOURCES = tuple(name for name in SOURCES if name != 'scripts/inventario_importacao.py')
+COMMUNITY_NOTICES = ('LICENSE', 'NOTICE', 'THIRD_PARTY_NOTICES.md')
 CSP_DOCS = ('docs/session-prompt.md', 'docs/manual-configuracao-csp.md', 'docs/csp-configuracoes-gerenciadas.json',
             'docs/analise-csp-horario-shader-020.md', 'docs/configuracoes-otimizadas-steam-deck.md',
             'docs/analise-csp-linear-021.md', 'docs/hud-camera-deck.md', 'docs/contrato-pratica-sessao.md',
@@ -81,6 +86,19 @@ def digest(path):
         while chunk := stream.read(1024 * 1024):
             result.update(chunk)
     return result.hexdigest()
+
+
+def community_notice_hashes(source=None):
+    """Snapshot regular, unlinked notice files before producing a bundle."""
+    source = ROOT if source is None else source
+    return {name: safe.hash_reference_file(source/name)[0] for name in COMMUNITY_NOTICES}
+
+
+def copy_community_notices(bundle, hashes, source=None):
+    """Copy the explicit notice set without following links or overwriting files."""
+    source = ROOT if source is None else source
+    for name in COMMUNITY_NOTICES:
+        safe.copy_verified(source/name, bundle/name, hashes[name])
 
 
 def command(*args, **kwargs):
@@ -201,7 +219,10 @@ def reuse_static_payload(source, bundle, *, csp_zip=None):
 
 def build(batch, native_dir, *, csp_zip=None, gt5_zip=None, bacc_dir=None,
           toasty_assets=None, rogue_album_assets=None, font=None, licenses_dir=None,
-          reuse_delivery=None, source_commit=None, build_number=None, community=False):
+          reuse_delivery=None, source_commit=None, build_number=None, community=False,
+          community_notices=None):
+    if community_notices is not None and not community:
+        raise ValueError('--community-notices requires --community')
     if community and any(value is not None for value in
                          (csp_zip, gt5_zip, bacc_dir, reuse_delivery,
                           toasty_assets, rogue_album_assets)):
@@ -236,6 +257,8 @@ def build(batch, native_dir, *, csp_zip=None, gt5_zip=None, bacc_dir=None,
         raise FileExistsError('Lote já existe: '+str(work))
     source_paths = COMMUNITY_SOURCES if community else SOURCES+(CSP_DOCS if csp_zip is not None or reused else ())
     before = {p: digest(ROOT/p) for p in source_paths}
+    notice_source = safe.source_root(community_notices if community_notices is not None else ROOT) if community else None
+    notice_before = community_notice_hashes(notice_source) if community else None
     from src.launcher import rogue_toasty_assets, rogue_rewards
     toasty_source = album_source = None
     toasty_before = album_before = None
@@ -279,8 +302,10 @@ def build(batch, native_dir, *, csp_zip=None, gt5_zip=None, bacc_dir=None,
     for row in inputs:
         args += ['--add-binary', str(native/row['soname'])+':.']
     args.append(str(ROOT/'scripts/jogo_deck.py'))
+    compilation_started = time.monotonic()
     with (work/'build.log').open('x') as log:
         command(*args, cwd=ROOT, env=env, stdout=log, stderr=subprocess.STDOUT)
+    compilation_seconds = round(time.monotonic()-compilation_started, 3)
     raw = work/'dist'/executable_name
     # O PyInstaller gera links próprios. A distribuição usa cópias regulares,
     # recusando qualquer link que aponte para fora do resultado desta build.
@@ -289,15 +314,15 @@ def build(batch, native_dir, *, csp_zip=None, gt5_zip=None, bacc_dir=None,
             raise ValueError('Link externo no resultado: '+str(path))
     bundle = work/bundle_name
     shutil.copytree(raw, bundle, symlinks=False)
+    if community:
+        copy_community_notices(bundle, notice_before, notice_source)
     toasty_manifest = bundle_toasty_assets(toasty_source, bundle) if not community else None
     album_manifest = bundle_rogue_album_assets(album_source, bundle) if not community else None
     csp_manifest = csp.unpack(csp_zip, bundle/'csp') if csp_zip is not None and not reused else None
     if gt5_zip is not None:
-        from src.launcher import file_io as safe
         safe.copy_verified(Path(gt5_zip), bundle/'mods'/gt5_camera.ARCHIVE_NAME,
                             gt5_camera.ARCHIVE_SHA256)
     if bacc_dir is not None:
-        from src.launcher import file_io as safe
         for spec in bacc_camera.SPECS.values():
             safe.copy_verified(Path(bacc_dir)/spec['archive'], bundle/'mods'/spec['archive'], spec['sha256'])
     font_manifest = (font_support.bundle(bundle/'csp-fonts', font.parent,
@@ -355,7 +380,6 @@ def build(batch, native_dir, *, csp_zip=None, gt5_zip=None, bacc_dir=None,
         if licenses_dir is None and copyright_file.is_file():
             shutil.copyfile(copyright_file, licenses/(owner+'.txt'))
     if licenses_dir is not None:
-        from src.launcher import file_io as safe
         notices = safe.source_root(licenses_dir)
         for notice in sorted(notices.rglob('*')):
             safe.check_components(notice)
@@ -366,6 +390,12 @@ def build(batch, native_dir, *, csp_zip=None, gt5_zip=None, bacc_dir=None,
     after = {p: digest(ROOT/p) for p in source_paths}
     if before != after:
         raise RuntimeError('Fontes mudaram durante a build; preserve o lote e gere outro')
+    if community:
+        if community_notice_hashes(notice_source) != notice_before:
+            raise RuntimeError('Avisos mudaram durante a build; preserve o lote e gere outro')
+        if any(safe.hash_reference_file(bundle/name)[0] != notice_before[name]
+               for name in COMMUNITY_NOTICES):
+            raise RuntimeError('Avisos copiados divergiram; preserve o lote e gere outro')
     if csp.digest(font)!=font_sha256:
         raise RuntimeError('Fonte tipográfica mudou durante o build')
     if not community and rogue_toasty_assets.load_distribution(toasty_source) != toasty_before:
@@ -394,6 +424,7 @@ def build(batch, native_dir, *, csp_zip=None, gt5_zip=None, bacc_dir=None,
                 build_libc=platform.libc_ver(),
                 highest_glibc_symbol=max(versions, key=lambda s:tuple(map(int,s.split('.')))) if versions else None,
                 source_sha256=before, native_inputs=inputs,
+                community_notice_sha256=notice_before,
                 font=dict(name=font.name,sha256=font_sha256),
                 csp_fonts=font_manifest,
                 gt5_camera=gt5_manifest,
@@ -405,6 +436,20 @@ def build(batch, native_dir, *, csp_zip=None, gt5_zip=None, bacc_dir=None,
                 steam_os_observed=False)
     (bundle/'build-info.json').write_text(json.dumps(info, indent=2, ensure_ascii=False)+'\n', encoding='utf-8')
     (bundle/'LEIA-ME.txt').write_text(
+        ('ac-deck community preview — Linux x86_64\n\n'
+         'Installation: https://github.com/alexandrefortes/ac-deck#install-on-steam-deck\n'
+         'Use the verified installation command in that guide. No GitHub login is required.\n'
+         'For an already verified extracted package, ./ac-deck install runs setup.\n'
+         'Setup discovers the installed Steam game, downloads and verifies CSP separately,\n'
+         'and configures the original Assetto Corsa entry with Steam and the game closed.\n'
+         'It preserves unrelated mods and player data and reports incompatible files.\n'
+         'After setup, open Steam and press Play on Assetto Corsa.\n'
+         './ac-deck --help shows informational commands without opening the launcher.\n\n'
+         'The game, DLCs, Steam, Proton, CSP and private mod/media packs are not bundled.\n'
+         'This preview has automated checks; physical Steam Deck behavior is unverified.\n'
+         'Read LICENSE, NOTICE and THIRD_PARTY_NOTICES.md. The project is provided as is\n'
+         'without warranties or creator liability as far as applicable law allows.\n'
+         if community else
         'ac-deck — launcher Linux x86_64\n\n'
         f'./{executable_name} --help\n'
         f'./{executable_name} vincular --jogo "/instalacao/assettocorsa" --lote jogo\n\n'
@@ -413,13 +458,10 @@ def build(batch, native_dir, *, csp_zip=None, gt5_zip=None, bacc_dir=None,
         'Python, SDL2 e leitor de imagens acompanham o launcher. Steam, licença, jogo e Proton ficam na plataforma.\n'
         'vincular usa a instalação original; não copia carros, pistas ou executável.\n'
         'Este build não comprova relocação dos dados do jogo ou execução offline.\n'
-        + ('Distribuição comunitária: sem CSP, mods ou mídia privada. Use sua instalação legítima do jogo.\n'
-           if community else '')
         + (f'\nCSP {csp_manifest["version"]} incluído. ./papao csp-info confere o payload.\n'
            'O modo steam acrescenta dwrite.dll/extension ao jogo declarado, sem copiar carros/pistas.\n'
-           'Use --sem-csp antes de -- para executar a referência sem carregar o patch.\n'
-           'Graphics > Profile: Performance, Quality, CSP Performance, CSP Quality. Troca vale na próxima sessão.\n'
-           'Perfis base usam dwrite do Wine; perfis CSP usam WeatherFX base e cor linear sempre Off.\n'
+           'Graphics > Profile: CSP Performance ou CSP Quality. Troca vale na próxima sessão.\n'
+           'Os perfis usam WeatherFX base e cor linear sempre Off.\n'
            'CSP Quality revisado: sombras 1024/100 m, reflexos 512/uma face, grama Off e fumaça simplificada.\n'
            'Menu sem desenho durante a corrida; ao recuperar foco, mostra Finishing session com Start bloqueado.\n'
            'Preferências de conforto ficam salvas independentemente do perfil. Sol/Pure não incluídos.\n'
@@ -428,7 +470,7 @@ def build(batch, native_dir, *, csp_zip=None, gt5_zip=None, bacc_dir=None,
            'CSP usa WINE_DBGHELP_OLD_PDB=1 no filho, preservando valor explícito da entrada Steam.\n'
            'Aba Controle: Original/Assistido e ajustes do analógico. R3 alterna Race/Drift.\n'
            'Overrides CSP cobrem o state da cópia e Documents normal do Proton, com histórico.\n'
-           'Pure e Sol não acompanham este pacote.\n' if csp_manifest else ''), encoding='utf-8')
+           'Pure e Sol não acompanham este pacote.\n' if csp_manifest else '')), encoding='utf-8')
     rows = []
     for path in sorted(bundle.rglob('*')):
         if path.is_symlink():
@@ -442,10 +484,14 @@ def build(batch, native_dir, *, csp_zip=None, gt5_zip=None, bacc_dir=None,
         member.uid = member.gid = 0
         member.uname = member.gname = ''
         return member
+    archive_started = time.monotonic()
     with tarfile.open(archive, 'x:gz', format=tarfile.PAX_FORMAT) as tar:
         tar.add(bundle, arcname=bundle.name, filter=archive_member)
+    archive_seconds = round(time.monotonic()-archive_started, 3)
     summary = dict(bundle=str(bundle), archive=str(archive), archive_sha256=digest(archive),
-                   archive_bytes=archive.stat().st_size, files=len(rows)+1, build=info)
+                   archive_bytes=archive.stat().st_size, files=len(rows)+1, build=info,
+                   timings=dict(compilation_seconds=compilation_seconds,
+                                archive_seconds=archive_seconds))
     (work/'result.json').write_text(json.dumps(summary, indent=2, ensure_ascii=False)+'\n', encoding='utf-8')
     print(json.dumps({k:v for k,v in summary.items() if k != 'build'}, ensure_ascii=False))
     return summary
@@ -463,6 +509,8 @@ if __name__ == '__main__':
     parser.add_argument('--build-number')
     parser.add_argument('--community', action='store_true',
                         help='Distribuição comunitária sem CSP, mods ou mídia privada')
+    parser.add_argument('--community-notices', type=Path,
+                        help='Pasta explícita com LICENSE, NOTICE e THIRD_PARTY_NOTICES.md; padrão: raiz pública')
     parser.add_argument('--csp-zip', type=Path, help='ZIP CSP com SHA-256 fixado; substitui o CSP de --reuse-delivery, sem baixar arquivos')
     parser.add_argument('--gt5-camera-zip', type=Path, help='ZIP GT5 pessoal fixado, para a entrega privada')
     parser.add_argument('--bacc-dir', type=Path, help='Pasta com os dois ZIPs BACC pessoais fixados')
@@ -476,6 +524,7 @@ if __name__ == '__main__':
               bacc_dir=args.bacc_dir, toasty_assets=args.toasty_assets,
               rogue_album_assets=args.rogue_album_assets, font=args.font, licenses_dir=args.licenses_dir,
               reuse_delivery=args.reuse_delivery, source_commit=args.source_commit,
-              build_number=args.build_number, community=args.community)
+              build_number=args.build_number, community=args.community,
+              community_notices=args.community_notices)
     except (OSError, ValueError, RuntimeError, subprocess.CalledProcessError) as error:
         parser.exit(1, str(error)+'\n')

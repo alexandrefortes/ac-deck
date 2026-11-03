@@ -203,6 +203,11 @@ def _selection_label(selection, key):
 def _footer(w, menu):
     w.rect(216, 684, 1064, 116, (23, 24, 26))
     w.rect(216, 684, 1064, 1, (56, 57, 58))
+    if getattr(menu, 'event_result_visible', lambda: False)():
+        _text(w, 'EVENT / SESSION RESULT', 248, 706, 590, 1.35, YELLOW)
+        _text(w, 'Keep the car and circuit you enjoyed.', 248, 732, 590, 1.65, TEXT)
+        _text(w, 'A Select    B Back to event    Arrows Navigate', 248, 762, 590, 1.3, MUTED)
+        return
     if getattr(menu, 'rogue_result_visible', lambda: False)():
         result = menu.rogue_result
         _text(w, 'ROGUE / '+('RUN SUMMARY' if result['tone'] == 'over' else
@@ -466,6 +471,10 @@ def _entry(w, item, focused, catalogue=False):
     if catalogue and item.get('favorite'):
         w.rect(x+8,y+8,86,24,(17,19,21))
         _text(w,'Favorite',x+14,y+13,74,1.4,YELLOW)
+    if catalogue and item.get('blacklisted'):
+        yy=y+36 if item.get('favorite') else y+8
+        w.rect(x+8,yy,90,24,(17,19,21))
+        _text(w,'Blacklisted',x+14,yy+5,80,1.4,YELLOW)
     _frame(w, x, y, width, height, YELLOW if focused else LINE,
            2 if focused else 1)
 
@@ -483,71 +492,41 @@ def _rogue_result(w, item):
     x, y, width, height = (int(item[key]) for key in ('x', 'y', 'w', 'h'))
     now = getattr(w, '_text_frame_time', None)
     elapsed = max(0, (time.monotonic() if now is None else now)-item['started'])
-    progress = min(1, elapsed/.15)
-    ease = 1-(1-progress)**3
+    ease = 1-(1-min(1, elapsed/.15))**3
     victory = data['tone'] == 'victory'
     accent = YELLOW if victory else (197, 140, 122) if data['tone'] in ('retry', 'over') else MUTED
     w.rect(x, y, width, height, (28, 28, 27) if victory else (27, 26, 27))
     _frame(w, x, y, width, height, (round(66+12*ease), round(60+9*ease), 43) if victory else LINE)
     w.rect(x, y, 4, height, accent)
-    _text(w, 'CHALLENGE '+str(data['stage'])+'  /  '+('PERFECT STREAK' if data['milestone'] else 'FIRST PLACE' if victory and outcome['position'] == 1 else 'RACE RESULT'),
-          x+24, y+16, 350, 1.35, accent)
-    _text(w, data['car_name']+' / '+data['track_name'], x+380, y+16, width-404, 1.3, MUTED,
-          scroll_key='rogue-result-content')
-    _text(w, data['title'], x+24, y+45, width-48, 3.65, TEXT if victory else (220, 205, 198))
-    unconfirmed = data['tone'] == 'unconfirmed'
-    _text(w, data['reason'], x+24, y+(94 if unconfirmed else 98), width-48, 1.5, TEXT if unconfirmed else MUTED)
-    if unconfirmed:
-        _text(w, 'Reason: '+data['reason_code'] if data.get('reason_code') else 'Reason unavailable',
-              x+24, y+116, width-48, 1.25, YELLOW)
-    w.rect(x+24, y+135, width-48, 1, LINE)
-    _text(w, 'FINAL POSITION', x+24, y+153, 276, 1.25, MUTED)
+    _text(w, 'CHALLENGE '+str(data['stage'])+'  /  '+('PERFECT STREAK' if data['milestone'] else
+          'RACE RESULT' if data['selection']['mode'] == 2 else 'EVENT RESULT'),
+          x+20, y+12, width-40, 1.3, accent)
+    _text(w, data['title'], x+20, y+35, 680, 3.0, TEXT if victory else (220, 205, 198))
     position = outcome.get('position')
-    _text(w, 'P'+str(position) if position is not None else '--', x+24, y+179, 276, 5.6, accent)
-    _text(w, 'TARGET  /  P'+str(outcome['target_position'])+' OR BETTER', x+336, y+153, width-364, 2.0, TEXT)
-    confirmed = outcome['status'] in ('won', 'lost') and position is not None
-    finished = confirmed or outcome.get('reason') == 'final_position_missing'
-    checks = [('Race finished' if finished else 'Finish not confirmed', finished),
-              ('Position target achieved' if victory else 'Position target missed' if confirmed else 'Target not confirmed', victory)]
-    for index, (label, passed) in enumerate(checks):
-        yy = y+191+index*27
-        w.rect(x+337, yy, 14, 14, accent if passed else RAISED)
-        if passed:
-            w.rect(x+340, yy+6, 3, 5, DARK)
-            w.rect(x+343, yy+3, 5, 3, DARK)
-        _text(w, label, x+364, yy-1, width-394, 1.5,
-              TEXT if passed else MUTED)
-    for index, mastery in enumerate(data['mastery']):
-        xx, yy, bar_width = x+24+index*486, y+256, 442
-        after, before = mastery['after'], mastery['before']
-        w.rect(xx, yy, bar_width, 66, (33, 34, 34))
-        _text(w, mastery['label']+'  +'+str(mastery['awarded'])+' XP', xx+12, yy+10, bar_width-24, 1.75, TEXT)
-        xp_label = str(after['xp'])+'/'+str(after['next_xp'])+' XP' if after['next_xp'] is not None else str(after['xp'])+' XP / MAX'
-        _text(w, f"Lv {after['level']} / {after['title']} / {xp_label}", xx+12, yy+35, bar_width-24, 1.2, MUTED)
-        if after['level'] > before['level']:
-            _text(w, 'LEVEL UP', xx+bar_width-96, yy+12, 84, 1.1, accent)
-        target = after['next_xp'] or max(1, after['xp'])
-        fill = min(1, (before['xp']+(after['xp']-before['xp'])*ease)/target)
-        w.rect(xx, yy+61, bar_width, 5, LINE)
-        if fill > 0:w.rect(xx, yy+61, max(1, int(bar_width*fill)), 5, accent)
-    stats = f"{outcome['wins']} {'WIN' if outcome['wins'] == 1 else 'WINS'}    /    PERFECT STREAK {outcome['streak']}    /    SPARE LIVES {outcome['lives']}"
-    _text(w, stats, x+24, y+340, width-48, 1.6, TEXT)
-    note = ('Progress saved. Your next challenge is waiting.' if victory else
-            f"Run rewards: +{data['run_xp']} car XP / +{data['run_xp']} circuit XP / {data['run_rewards']} discoveries. Permanent progress kept." if data['tone'] == 'over' else
-            '1 spare life used. Perfect streak reset. Continue to the next event.' if data.get('advance') else
-            '1 spare life used. Perfect streak reset. You can retry the same challenge.' if data['tone'] == 'retry' else
-            'Lives, XP and your perfect streak are unchanged. Retry the same challenge.')
-    _text(w, note, x+24, y+371, width-48, 1.35, MUTED)
+    objective = outcome.get('objective')
+    if objective:
+        from . import rogue
+        actual = rogue.format_value(objective['kind'], outcome.get('value')).replace(' points', '')
+        target = rogue.format_value(objective['kind'], objective['target']).replace(' points', '')
+        score = actual+' / '+target+(' PTS' if objective['kind'] == 'points' else '')
+    else:
+        score = ('P'+str(position) if position is not None else '--')+' / TARGET P'+str(outcome['target_position'])
+    _text(w, score,
+          x+700, y+42, width-720, 1.7, accent)
+    _text(w, data['reason'], x+20, y+76, width-40, 1.45, TEXT if data['tone'] == 'unconfirmed' else MUTED)
+    if data['tone'] == 'unconfirmed':
+        _text(w, 'Reason: '+data['reason_code'] if data.get('reason_code') else 'Reason unavailable',
+              x+20, y+96, width-40, 1.2, YELLOW)
+    mastery = '   /   '.join(row['label']+' +'+str(row['awarded'])+' XP / Lv '+str(row['after']['level']) for row in data['mastery'])
+    _text(w, mastery+'   /   '+str(outcome['wins'])+' WINS / '+str(outcome['lives'])+' SPARE LIVES',
+          x+20, y+120, width-40, 1.35, TEXT)
     rewards = data['rewards']
     if rewards:
-        w.rect(x+24, y+401, width-48, 28, (46, 42, 29))
         names = ' / '.join(reward['name'] for reward in rewards[:2])
         if len(rewards) > 2:names += f" / +{len(rewards)-2} more in Achievements"
-        art = next((reward['image'] for reward in rewards if reward['image']), None)
-        if art:_image(w, art, x+28, y+402, 28, 26, fit='contain', background=None)
-        _text(w, 'UNLOCKED  '+names, x+(66 if art else 34), y+407, width-(100 if art else 68), 1.4, accent)
+        _text(w, 'UNLOCKED  '+names, x+20, y+143, width-40, 1.2, accent)
     else:
-        _text(w, 'XP AND ACHIEVEMENTS STAY WITH YOU', x+24, y+407, width-48, 1.2, MUTED)
+        _text(w, 'XP AND ACHIEVEMENTS STAY WITH YOU', x+20, y+143, width-40, 1.2, MUTED)
 
 
 def _item(w, item, focus_id):

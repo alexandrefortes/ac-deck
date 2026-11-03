@@ -10,7 +10,7 @@ from pathlib import Path
 import re
 import warnings
 
-from . import file_io as safe
+from . import file_io as safe, content
 
 
 MAX_FILE_BYTES = 16 * 1024 * 1024
@@ -49,7 +49,7 @@ def paths(game, item, kind='car', skin=None):
                 root = game/'content/cars'/identity/'skins'/name
                 candidates.extend(root/filename for filename in ('preview.jpg', 'preview.png', 'preview.jpeg'))
         elif kind in ('track', 'outline'):
-            layout = _identifier(item.get('layout', ''), empty=True)
+            layout = content.layout_identifier(item.get('layout', ''), empty=True)
             root = game/'content/tracks'/identity/'ui'
             roots = (root/layout, root) if layout else (root,)
             filenames = ('outline.png',) if kind == 'outline' else ('preview.png', 'preview.jpg', 'preview.jpeg')

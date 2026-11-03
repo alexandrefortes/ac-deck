@@ -1,0 +1,9 @@
+CPython 3.13.5 build changes for ac-deck
+
+Upstream C sources are unchanged. Modules/Setup.local disables _dbm, _gdbm,
+readline, _tkinter, _curses, _curses_panel and _uuid. CPython is built as a
+shared libpython without static libpython, with bundled libmpdec, with
+ensurepip, without pkg-config/readline, and with six separately compiled
+static PIC dependencies: OpenSSL3.0.16, zlib1.3.1, bzip2 1.0.8, liblzma5.2.12,
+libffi3.4.6 and SQLite3.47.1. No Berkeley DB/GDBM or old standalone Python
+objects are linked. See the exact versioned setup recipe and inventory.

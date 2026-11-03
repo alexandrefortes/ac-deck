@@ -1,36 +1,42 @@
 # Troubleshooting
 
-The prepared repository contains reviewed source, a community builder, synthetic tests and interface previews. There is no validated public installer or runtime release yet. Reports can identify source-test failures, local build issues, incorrect documentation, broken links and unreadable previews.
+The current download is **v0.1.0-preview.1**, an experimental community
+installer and runtime. Automated checks are recorded in
+[build validation](build-validation.md); physical Deck support is unverified.
 
-## Check the available evidence
+## Installation
 
-- For documentation, include the page and the step or sentence that caused the problem.
-- For interface previews, include the screen and image resolution. The screenshots use demonstration data and do not establish real race or hardware behavior.
-- For a future public runtime report, identify the exact launcher version or source revision and how it was installed.
-
-## Runtime checks for a reviewed package
-
-| Symptom | Useful checks |
+| Message or symptom | Action |
 | --- | --- |
-| Launcher does not start | Confirm the documented platform, package checksum, launch entry and complete extraction. Include the first error and the launcher version. |
-| Game is not found | Confirm that the original Assetto Corsa is installed through Steam and that the documented game attachment points to that installation. |
-| Car, track or event is missing | Confirm that the required game/DLC/mod content is installed and compatible. The launcher discovers content from the player's installation. |
-| Race fails to start | Record the selected content, launcher graphics profile, SteamOS and Proton versions, and the displayed error. Distinguish launcher startup from game startup. |
-| Optional AI or dictation fails | Check the selected service/model, network access and configured credentials. Share the error text with credentials removed. Manual setup remains independent of AI. |
-| Progress or settings appear missing | Stop changes to that data, identify the effective attachment/data paths and consult the release's [recovery instructions](update-and-recovery.md). |
+| Terms were not accepted | Rerun the README command, read the disclaimer and explicitly select Yes if you agree. No is the default. |
+| Enlarge the terminal | Enlarge Konsole so the whole acknowledgement is visible, then rerun the command. |
+| Game not found | Install the original Assetto Corsa through Steam. Mount the game's SD card if applicable, then rerun the same command. A manual path must still identify a game declared in a Steam library. |
+| Waiting for Steam | Use Steam → Exit and close the launcher/game. Setup continues when they are closed; after its timeout, rerun the same command. |
+| Existing CSP file differs | Setup preserved a modified or incompatible required file. Keep the error and your current mod installation. Do not delete it or a receipt to force setup through. |
+| Existing launch options | Supported literal environment assignments are preserved. Unknown wrappers are preserved and refused. Record your existing option privately and report the conflict. |
+| Destination differs or is incomplete | The bootstrap preserves a different, edited or partial runtime. This is not the general updater. Keep the folder and use the version's recovery guidance. |
+| Download or checksum failure | Preserve the error and retry the documented command. Report a persistent failure with the preview version; do not substitute another CSP/archive version or disable verification. |
+| GLIBC/platform error | Run on Steam Deck/SteamOS x86_64 and use the normal SteamOS updater. This release requires GLIBC 2.38 or newer. |
 
-These checks help gather evidence; they are not a published compatibility guarantee. Game reinstalls, prefix deletion and profile resets should not be used as generic diagnostic steps.
+No GitHub login, developer SDK or manual CSP copying is required. Do not run
+the installer with sudo. See [installation](installation.md) for the full flow.
 
-## Report a reproducible problem
+## Launcher and game
 
-Use [GitHub issues](https://github.com/alexandrefortes/ac-deck/issues) and provide:
+| Symptom | Useful evidence |
+| --- | --- |
+| First Steam Play fails | Record the error and actual selected Proton version. Missing default Proton folders are prepared by that same selected Proton, without a race; an existing or custom path is preserved. |
+| Missing car, track or event | Confirm the relevant game/DLC/mod is installed. The launcher discovers the player's actual content. |
+| Race does not start | Record selected content, graphics profile, SteamOS/Proton versions and the first error. Separate launcher startup from game startup. |
+| Optional AI/dictation fails | Check the selected service and private credentials. Manual races do not require AI. Remove credentials from reports. |
+| Settings/progress seem missing | Stop changing that data and identify the installation/attachment in use. Follow [recovery](update-and-recovery.md); do not reset progress or reinstall the game as a generic fix. |
 
-1. The affected page or the exact launcher version/source revision.
-2. SteamOS and Proton versions for a runtime issue.
-3. The smallest steps that reproduce the problem.
-4. Expected behavior, actual behavior and any displayed error.
-5. Relevant screenshots or a short sanitized log excerpt.
+The user starts Steam, the launcher and each race. Installing the preview does
+not prove controls, offline use, performance or game compatibility.
 
-Remove API keys, tokens, account details and private paths before attaching files. Share a relevant excerpt rather than an entire Steam/Proton prefix, game installation or session archive.
+## Report a problem
 
-For a feature proposal, describe the task you want to complete and how the current behavior gets in the way. See [CONTRIBUTING](../CONTRIBUTING.md).
+Use [GitHub issues](https://github.com/alexandrefortes/ac-deck/issues). Include
+the preview version, SteamOS and actually selected Proton versions, steps,
+expected/observed result and a sanitized terminal error. Keep account IDs,
+credentials, complete Steam VDF files, prefixes and private session data local.

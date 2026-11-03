@@ -10,6 +10,10 @@ from . import file_io as safe, game_config, package_setup
 from . import content
 
 
+class DocumentsMissing(ValueError):
+    """O Proton ainda não criou a pasta Documents da instalação Steam."""
+
+
 def attach(source, batch, *, project_root):
     source = safe.source_root(source)
     if not package_setup.BATCH_PATTERN.fullmatch(batch):
@@ -89,7 +93,9 @@ def documents(environment):
         raise ValueError('Prefixo Steam/Proton ausente')
     anchor = Path(prefix)/'pfx/drive_c/users/steamuser/Documents'
     if not anchor.is_dir():
-        raise ValueError('Documents do Proton ainda não existe; abra o jogo uma vez pela Steam')
+        if anchor.exists() or anchor.is_symlink():
+            raise ValueError('Proton Documents is not a valid directory; the existing path was preserved')
+        raise DocumentsMissing('Proton has not created its Documents folder yet')
     # O link Documents é criado normalmente pelo Proton, não é uma importação.
     return anchor.resolve(strict=True)
 
@@ -109,9 +115,10 @@ def config_path(game, environment, explicit=None):
             base = game
         else:
             program = folders.get('FOLDER','PROGRAM_NAME',fallback='Assetto Corsa')
+            program = safe.relative_file(program) if program else ''
             base = documents(environment)
             if program:
-                base /= safe.relative_file(program)
+                base /= program
         path = base/'cfg'
     safe.check_components(path)
     return path

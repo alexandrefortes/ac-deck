@@ -5,7 +5,11 @@ see THIRD_PARTY_NOTICES.md and the accompanying notices.
 
 The terms for third-party LGPL libraries preserve the recipient's applicable
 rights to modify or replace those libraries for their own use and reverse
-engineer the combined work for debugging those modifications. Corresponding
-library sources and notices accompany the compiled community distribution.
+engineer the combined work for debugging those modifications. Before publishing
+each compiled distribution, verify its exact dependency notices, required
+corresponding sources and recipient access to those materials. A local
+candidate or an earlier distribution does not establish that these obligations
+have been met. See docs/dependency-license-review.md for the recorded review
+and remaining publication gates.
 
 Required Notice: Copyright 2026 Alexandre Fortes Santana

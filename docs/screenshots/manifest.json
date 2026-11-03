@@ -1,89 +1,108 @@
 {
   "schema": 1,
   "product": "ac-deck",
-  "method": "SDL2 software surface / actual UI renderer",
-  "demo_catalog": true,
-  "game_started": false,
-  "network_used": false,
-  "artwork": "Original schematic car and circuit illustrations; fictional demo names.",
-  "source_sha256": {
-    "src/launcher/ui_render.py": "8beb4570e35812778b949f76616b0fc4287c34d2a9e086f8889b294f7bfcc293",
-    "src/launcher/window.py": "56cbb7d8b65c619aa87a2f3fe181e83cb74eb55008c40414c04d82409e5e8736",
-    "src/launcher/native_menu.py": "6793bedbdcb63f39eb694ae33236205499c830cb08a18216e1c8c713b8bac3f6",
-    "src/launcher/rogue_ui.py": "9c6ec868c56e017a33d07e5e8b80f1cd032ed3060cf77ce690e8a178a86b1cb4",
-    "src/launcher/campaign_ui.py": "3913fff0e8af67020f90b047848db2f7558bcb788be9c8c7f5638872ff568c72",
-    "scripts/render_readme_screenshots.py": "bfafb82b269e59c48cb0517ecb37fcb0ac392c3fef0bfd3c49a71bfe16937dd7"
-  },
-  "images": [
-    {
-      "file": "ac-deck-drive-1280x800.png",
-      "view": "drive",
-      "width": 1280,
-      "height": 800,
-      "sha256": "8b09fe7f5573ec6004c9de625168d67756adcd537ce0d8cdabe3bb8a804f72eb"
+  "status": "historical_record_only; current PNG payload omitted",
+  "rights_status": "Redistribution rights for the supplied artwork were not established",
+  "images": [],
+  "historical_reference": {
+    "schema": 1,
+    "product": "ac-deck",
+    "method": "SDL2 software surface / actual UI renderer",
+    "demo_catalog": true,
+    "game_started": false,
+    "network_used": false,
+    "artwork": "User-supplied Assetto Corsa previews of the Nissan Skyline GT-R R34 and Spa-Francorchamps.",
+    "source_sha256": {
+      "src/launcher/ui_render.py": "f1cee2c2de72676659727848a66eee48d16f8648095dc6ba2a97ee1ebbc4ee91",
+      "src/launcher/window.py": "fe4ec0f398bafec9cdc77e4d7e63a10737b1c3bb7027838cbd637c7043acb467",
+      "src/launcher/native_menu.py": "f97daa2a72b4feb992941ac391b5bb3bf664fa96ef707e5bb77d65d55d7f88c1",
+      "src/launcher/rogue_ui.py": "37c9dacf85e6ec9df77cdc6f0df3449a57d4ff1f69fbbe6f86d54db2b284bc80",
+      "src/launcher/campaign_ui.py": "3913fff0e8af67020f90b047848db2f7558bcb788be9c8c7f5638872ff568c72",
+      "scripts/render_readme_screenshots.py": "bfafb82b269e59c48cb0517ecb37fcb0ac392c3fef0bfd3c49a71bfe16937dd7"
     },
-    {
-      "file": "ac-deck-drive-1920x1200.png",
-      "view": "drive",
-      "width": 1920,
-      "height": 1200,
-      "sha256": "6a7ed2028b087d10ac41640c02200c7a992dd4607eafb138e7db7354488aca93"
+    "images": [
+      {
+        "file": "ac-deck-drive-1280x800.png",
+        "view": "drive",
+        "width": 1280,
+        "height": 800,
+        "sha256": "516b0a5382258c9bbc36f1d52b19c76c171b863865691114692a3bfcf494d696"
+      },
+      {
+        "file": "ac-deck-drive-1920x1200.png",
+        "view": "drive",
+        "width": 1920,
+        "height": 1200,
+        "sha256": "e1538d9b4a7c8c558b0571206a5f48bfed900b92d9dcfecd20e9f77b983b4feb"
+      },
+      {
+        "file": "ac-deck-events-1280x800.png",
+        "view": "events",
+        "width": 1280,
+        "height": 800,
+        "sha256": "f63f8f475a80ba6f68aef9ffe8c8532e5b6d8a2fa1ffb2f990ac05e8efc8e3cc"
+      },
+      {
+        "file": "ac-deck-events-1920x1200.png",
+        "view": "events",
+        "width": 1920,
+        "height": 1200,
+        "sha256": "3dafc74ed8e7c90e384daf31d7b9bf239503609791b4d4da9c40bc198d1045dd"
+      },
+      {
+        "file": "ac-deck-synth-1280x800.png",
+        "view": "synth",
+        "width": 1280,
+        "height": 800,
+        "sha256": "3a652d59fbf1f5e80032aa7710ffdc16fc53df7c0c6592106055e235bd09219c"
+      },
+      {
+        "file": "ac-deck-synth-1920x1200.png",
+        "view": "synth",
+        "width": 1920,
+        "height": 1200,
+        "sha256": "bfd77a92d24d42db140035faea28401f1483ffeef561ff72a4e79493c27b376d"
+      },
+      {
+        "file": "ac-deck-rogue-1280x800.png",
+        "view": "rogue",
+        "width": 1280,
+        "height": 800,
+        "sha256": "4b22083dffe2cea73c495e26d623387d930fcfdc5b96bb82a3711811eee0b1fc"
+      },
+      {
+        "file": "ac-deck-rogue-1920x1200.png",
+        "view": "rogue",
+        "width": 1920,
+        "height": 1200,
+        "sha256": "029d9f4d7ea32598a4256553de035fb44169b37e362c2d9dc6f0347bdcfe7be6"
+      },
+      {
+        "file": "ac-deck-settings-1280x800.png",
+        "view": "settings",
+        "width": 1280,
+        "height": 800,
+        "sha256": "6da57a7510ba50bf720f98a8f3efe4a2f3ac94f9c5d3f853205a24da065fee31"
+      },
+      {
+        "file": "ac-deck-settings-1920x1200.png",
+        "view": "settings",
+        "width": 1920,
+        "height": 1200,
+        "sha256": "2a711a70dc106e14c0bee0d6a530e0304db3e8102fbab769fce1887c3509e13e"
+      }
+    ],
+    "input_images": {
+      "nissan_skyline_r34": {
+        "format": "JPEG",
+        "sha256": "3814d798c36a5a14c2a9cf30c1b4eb4648ea9fa111a92a06d6079cc4a52677f5"
+      },
+      "spa": {
+        "format": "PNG",
+        "sha256": "3bb88c1486701951df7d8cc70c6a20c1acab285c7ea1e4426753a203dc2a847a"
+      }
     },
-    {
-      "file": "ac-deck-events-1280x800.png",
-      "view": "events",
-      "width": 1280,
-      "height": 800,
-      "sha256": "11d7d7546e34f111b66c48805523b06e504c0a6d11bd5837100cbb3583aeede6"
-    },
-    {
-      "file": "ac-deck-events-1920x1200.png",
-      "view": "events",
-      "width": 1920,
-      "height": 1200,
-      "sha256": "190e51f0de30962283b9573cfe80ac70bdd4a97245cfd5e322958d1eda164161"
-    },
-    {
-      "file": "ac-deck-synth-1280x800.png",
-      "view": "synth",
-      "width": 1280,
-      "height": 800,
-      "sha256": "2e0c16cc6a6d99f48f57e70499f06cadca967cf9cb04148c1a749bb787c84fc8"
-    },
-    {
-      "file": "ac-deck-synth-1920x1200.png",
-      "view": "synth",
-      "width": 1920,
-      "height": 1200,
-      "sha256": "8a29164bdaf01e7f12bf6b6572b3d7a5550f95593d0e15e41d7b1237c6e96ea1"
-    },
-    {
-      "file": "ac-deck-rogue-1280x800.png",
-      "view": "rogue",
-      "width": 1280,
-      "height": 800,
-      "sha256": "a72c32c833c66416b65892b997d370bb2730efbb472e1e09c8f0189a196fa7ca"
-    },
-    {
-      "file": "ac-deck-rogue-1920x1200.png",
-      "view": "rogue",
-      "width": 1920,
-      "height": 1200,
-      "sha256": "b953abfdf56fca34a1b56314a9e4cf8a8f35e24f9bce1b0e59800fff167f815a"
-    },
-    {
-      "file": "ac-deck-settings-1280x800.png",
-      "view": "settings",
-      "width": 1280,
-      "height": 800,
-      "sha256": "017d793c9d1d5a83d1de9315c4e770ae105d337a1f4b918defeddbdde3a3ce7e"
-    },
-    {
-      "file": "ac-deck-settings-1920x1200.png",
-      "view": "settings",
-      "width": 1920,
-      "height": 1200,
-      "sha256": "10fdf01a09c6e1906de998b1ce0d07e73af754838548dde4379ab21925f05edd"
-    }
-  ]
+    "private_gallery_script_sha256": "78f29bb7b305cfe9cd40a6e2b2778483341505b79ab1bcd0b650aa2d8740a7a6",
+    "catalog_note": "Synthetic metadata and events; no other game files were read."
+  }
 }

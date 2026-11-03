@@ -33,6 +33,23 @@ def pins(value=None):
     return value
 
 
+def without_blacklisted(catalog, blocked, fixed=None, *, blocked_tracks=()):
+    blocked = set(blocked)
+    pinned = pins(fixed)
+    blocked.discard(pinned['car'])
+    tracks = {(row['id'], row.get('layout', '')) for row in blocked_tracks}
+    if pinned['track'] is not None:
+        tracks.discard(tuple(pinned['track']))
+    if not blocked and not tracks:
+        return catalog
+    result = deepcopy(catalog)
+    result['cars'] = [row for row in result['cars'] if row['id'] not in blocked]
+    result['tracks'] = [row for row in result['tracks'] if (row['id'], row.get('layout', '')) not in tracks]
+    result['synthesis_classes'] = [dict(row, cars=[car for car in row['cars'] if car not in blocked])
+                                   for row in result['synthesis_classes']]
+    return result
+
+
 def candidates(catalog,base,fixed=None):
     fixed=pins(fixed)
     if 'skin' in fixed:
@@ -143,12 +160,17 @@ def _selected(base, car, track, weather, minutes, *, skin=None):
     return chosen
 
 
-def generate(game, base, *, seed=None, fixed=None, catalog=None):
+def generate(game, base, *, seed=None, fixed=None, catalog=None, blocked=(), blocked_tracks=()):
     """Usa o snapshot enriquecido fornecido ou descobre o conteúdo atual."""
     catalog = discover(game) if catalog is None else catalog
     base = deepcopy(base)
     base.pop(MARKER, None)
-    groups,tracks = candidates(catalog,base,fixed)
+    try:
+        groups,tracks = candidates(without_blacklisted(catalog,blocked,fixed,blocked_tracks=blocked_tracks),base,fixed)
+    except ValueError:
+        if blocked or blocked_tracks:
+            raise ValueError('No compatible race candidates. Check the blacklist and fixed car/track.') from None
+        raise
     seed = random.SystemRandom().getrandbits(64) if seed is None else seed
     if type(seed) is not int or not 0 <= seed < 2**64:
         raise ValueError('Invalid event seed')
