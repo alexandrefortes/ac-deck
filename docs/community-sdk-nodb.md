@@ -2,7 +2,7 @@
 
 This setup prepares a persistent Linux x86_64 SDK from the exact sources in
 the dependency inventory. It uses CPython 3.13.5 and the existing hash-pinned
-PyInstaller 6.22.3, hooks 2026.9 and Pillow 12.2.0 wheels. It does not run as a
+PyInstaller 6.22.3, hooks 2026.9 and Pillow 13.0.0 wheels, including setuptools 84.1.0. It does not run as a
 candidate stage. Keep the existing SDK and its inventory unchanged.
 
 The host needs GCC, binutils, GNU make, Perl, Bash, tar and POSIX utilities.

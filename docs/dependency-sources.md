@@ -1,16 +1,20 @@
 # Dependency sources and notices
 
 Download the matching source companion and checksums from
-[v0.1.0-preview.1](https://github.com/alexandrefortes/ac-deck/releases/tag/v0.1.0-preview.1).
+[v0.1.0-preview.2](https://github.com/alexandrefortes/ac-deck/releases/tag/v0.1.0-preview.2).
 The source tag supplies corresponding ac-deck application code. No private
 repository, developer account or paid download is needed for this release
 material. Installing the launcher does not require building it.
 
 | Material | Identity |
 | --- | --- |
-| `ac-deck-dependency-sources.tar.gz` | 385919586 bytes; SHA-256 `77a296984f0d07c5239f29630e44e7594a19899d56258a56c046f503fd260889` |
-| [Pinned inventory](../licenses/dependency-sources.json) | SHA-256 `05d9cc8128641eee1ee819fd959c84c8e2444fe09f02f63be1da2a42f1487023`; 67 components and 252 files |
-| Dependency notices | 84 original files under `licenses/dependency-notices/`, copied into runtime `licenses/sdk/` |
+| `ac-deck-dependency-sources.tar.gz` | 389623637 bytes; SHA-256 `89bebd9e5ec368b4cd5f482a83c9ad5b5720029aef3bbd4bfeaf6f95860515a0` |
+| [Pinned inventory](../licenses/dependency-sources.json) | SHA-256 `cd3a95e54ba6fc9be5716f8ced932490e55e964a6f1df1e96ef521971931909a`; 69 components and 278 files |
+| Dependency notices | 103 original files under `licenses/dependency-notices/`, copied into runtime `licenses/sdk/` |
+
+Preview 1 was withdrawn; its preserved [review](../archive/dependency-license-review-v0.1.0-preview.1.md)
+and older source companion do not cover these changed bytes. See the
+[security decision](security-review.md).
 
 The [current review](dependency-license-review.md) records the license routes
 and exact runtime identity. Older 275-file/95-notice material belongs to the
@@ -62,7 +66,8 @@ packages, wheels, a game or the SDK. Keep this large archive out of Git.
 | Six native inputs | Recorded Debian/Arch origins and exact SDL2, ALSA, LAME, Xss, libdecor and libsamplerate sources/build recipes; package-member and Arch BUILDINFO/PKGBUILD evidence retained. |
 | New Python interpreter | CPython 3.13.5 and the six pinned OpenSSL/zlib/bzip2/liblzma/libffi/SQLite sources, versioned SDK recipe, PSF/vendor notices and change summary. Berkeley DB, GDBM and the previous standalone interpreter are excluded from this runtime route. |
 | PyInstaller and hooks | Official 6.22.3 and 2026.9 sources and their distinct bootloader, build-hook and runtime-hook terms. |
-| Pillow and vendors | Pillow 12.2.0, identified vendor sources/recipes and full wheel notice. The pinned official wheel establishes payload provenance; its original cache and auditwheel rewriting were not recreated. |
+| Pillow and vendors | Pillow 13.0.0, identified vendor sources/recipes and full wheel notice. The pinned official wheel establishes payload provenance; its original cache and auditwheel rewriting were not recreated. |
+| Setuptools build input | Official 84.1.0 sdist and original project/vendor notices. The root MIT license does not relicense the LGPL/Apache/MPL vendor material. |
 | Wheel Xau | AlmaLinux upstream tar/spec and recorded original-hash/section/build-ID comparison. Source RPM binary evidence is not redistributed as source. |
 
 Required corresponding-source material covers the supplied LGPL libraries and

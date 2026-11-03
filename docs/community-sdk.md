@@ -3,7 +3,9 @@
 Players install the compiled [preview](installation.md); they need no build
 SDK. Contributors preparing a binary use an explicit persistent Linux x86_64
 SDK with CPython 3.13.5, PyInstaller 6.22.3,
-pyinstaller-hooks-contrib 2026.9 and Pillow 12.2.0.
+pyinstaller-hooks-contrib 2026.9, Pillow 13.0.0 and setuptools 84.1.0.
+The six exact package pins are in the [requirements](../scripts/launcher-linux-requirements.txt);
+see the [security review](security-review.md) for the replacement of preview 1.
 
 The current route builds pinned upstream CPython without Berkeley DB/GDBM.
 Follow [separate SDK setup](community-sdk-nodb.md) and
@@ -15,7 +17,7 @@ Set your local path and inspect an existing SDK:
 
 ```sh
 SDK_PREFIX=/path/to/persistent-sdk
-"$SDK_PREFIX/bin/python3.13" -B -c 'import sys,importlib.metadata as m,importlib.util as u; print(sys.version); print({n:m.version(n) for n in ("pyinstaller","pyinstaller-hooks-contrib","Pillow")}); assert u.find_spec("_dbm") is None and u.find_spec("_gdbm") is None'
+"$SDK_PREFIX/bin/python3.13" -B -c 'import sys,importlib.metadata as m,importlib.util as u; print(sys.version); print({n:m.version(n) for n in ("pyinstaller","pyinstaller-hooks-contrib","Pillow","setuptools")}); assert u.find_spec("_dbm") is None and u.find_spec("_gdbm") is None'
 ```
 
 Keep it outside disposable output on a Linux filesystem preserving POSIX
@@ -29,7 +31,7 @@ or dynamic symbols. That is SDK evidence; the complete runtime still needs its
 own ELF inventory, source mapping and check against the product's 2.39 ceiling.
 
 A candidate additionally needs explicit native libraries, licensed DejaVu font
-and the selected 84-notice collection. Keep original bytes. Community policy
+and the selected 103-notice collection. Keep original bytes. Community policy
 files come from the public checkout; a canonical build can select it using
 `--community-notices /path/to/ac-deck`. SDK notices use `--licenses-dir`;
 these arguments do not change their legal scope.

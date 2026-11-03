@@ -1,12 +1,16 @@
 # Install ac-deck on Steam Deck
 
-This guide installs **v0.1.0-preview.1**, an experimental Linux x86_64 preview.
+This guide installs **v0.1.0-preview.2**, an experimental Linux x86_64 preview.
 It has passed its automated checks; physical Steam Deck behavior has not been
 validated. The earlier `community-preview-001` archive is a different version
 and does not contain this installer.
 
 ## Before you start
 
+- Update SteamOS and its system certificates through the normal system updater.
+  Downloads use the operating system's certificate trust; the bundled Python
+  does not carry an independent updated root store. Read the
+  [security review](security-review.md) for the checked scope and known limits.
 - Install the original **Assetto Corsa** (Steam App ID 244210) on the Deck's
   internal storage or a Steam library on a mounted SD card. The launcher uses
   your legitimate game, DLCs and Steam account.
@@ -25,7 +29,7 @@ and does not contain this installer.
 3. Paste the whole command below and press Enter:
 
 ```sh
-bash -o pipefail -c 'curl --fail --show-error --location --proto "=https" --proto-redir "=https" https://raw.githubusercontent.com/alexandrefortes/ac-deck/v0.1.0-preview.1/install.sh | bash'
+bash -o pipefail -c 'curl --fail --show-error --location --proto "=https" --proto-redir "=https" https://raw.githubusercontent.com/alexandrefortes/ac-deck/v0.1.0-preview.2/install.sh | bash'
 ```
 
 No GitHub login is needed. Do not add `sudo`. No developer SDK, Python packages,
@@ -120,13 +124,13 @@ performance and acceptance are recorded separately.
 
 ## Exact release and source
 
-The [release page](https://github.com/alexandrefortes/ac-deck/releases/tag/v0.1.0-preview.1)
+The [release page](https://github.com/alexandrefortes/ac-deck/releases/tag/v0.1.0-preview.2)
 provides the runtime, installer, SHA256SUMS, corresponding dependency sources
 and promotion record. The source tag identifies the exact public code; the
 record binds its hashes to the frozen candidate. Runtime archive SHA-256:
 
 ```text
-f6e0b14ca8480217793d619bc7d6edb31a2666f486262681cecf301b79fbefb1
+72c1124a647fad0f7d03a1612aac6d9bda5deebd0e172ad9a6e541c1e851d28f
 ```
 
 ## Building from source

@@ -27,8 +27,8 @@
     {
       "path": "scripts/ciclo-entrega.json",
       "source_path": "scripts/ciclo-entrega.json",
-      "sha256": "d24d978a5d019b58ad65f2f08e265103f5f9a2229eabd79d190f36ad6ef64838",
-      "size_bytes": 2118,
+      "sha256": "8e6dda697e73614fc382e5c557e5201984ebe76d5b7e168f041be0373f34d047",
+      "size_bytes": 2550,
       "mode": 420
     },
     {
@@ -111,7 +111,7 @@
     {
       "path": "scripts/launcher-linux-requirements.txt",
       "source_path": "scripts/launcher-linux-requirements.txt",
-      "sha256": "a716a855fc855dff32a55049eb8443d307567f8a8cb41a85745efe2169cae373",
+      "sha256": "2201c8e3b8798b21286873a3c9f1b71b3e94b76a302af857392e1361dc9b6e25",
       "size_bytes": 848,
       "mode": 420
     },

@@ -1,0 +1,79 @@
+{
+  "queried_utc": "2026-11-03T16:35:22.087988+00:00",
+  "requirements_sha256": "2201c8e3b8798b21286873a3c9f1b71b3e94b76a302af857392e1361dc9b6e25",
+  "method": "GET GitHub global reviewed security advisories filtered by ecosystem=pip and exact affects=package@version; all pages",
+  "scope": "Six exact candidate Python package pins; not a complete native/stdlib/OS security audit",
+  "pins": [
+    {
+      "name": "altgraph",
+      "version": "0.17.5",
+      "query_aliases": [
+        "altgraph"
+      ],
+      "pinned_wheel_sha256": "f3a22400bce1b0c701683820ac4f3b159cd301acab067c51c653e06961600597",
+      "reviewed_advisories": []
+    },
+    {
+      "name": "packaging",
+      "version": "26.3",
+      "query_aliases": [
+        "packaging"
+      ],
+      "pinned_wheel_sha256": "d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c",
+      "reviewed_advisories": []
+    },
+    {
+      "name": "pyinstaller",
+      "version": "6.22.3",
+      "query_aliases": [
+        "PyInstaller",
+        "pyinstaller"
+      ],
+      "pinned_wheel_sha256": "451a4ae14b719365bf1a2f0a99dae7b3463060061c3a394c70d5264cfb439528",
+      "reviewed_advisories": []
+    },
+    {
+      "name": "pyinstaller-hooks-contrib",
+      "version": "2026.9",
+      "query_aliases": [
+        "pyinstaller-hooks-contrib"
+      ],
+      "pinned_wheel_sha256": "fb3e67dd64122561724c48ad0366ac9e8c16e638b63bf7d85de03bf3fdbf06c3",
+      "reviewed_advisories": []
+    },
+    {
+      "name": "setuptools",
+      "version": "84.1.0",
+      "query_aliases": [
+        "setuptools"
+      ],
+      "pinned_wheel_sha256": "5231689c6ac8156cd155cfb98c3fd6fb252c3e7e9bd3d78b64d3c55f132624c9",
+      "reviewed_advisories": []
+    },
+    {
+      "name": "Pillow",
+      "version": "13.0.0",
+      "query_aliases": [
+        "Pillow",
+        "pillow"
+      ],
+      "pinned_wheel_sha256": "5f56499c1a74d2b862beb0c33b8016f99d095858455df9d21583bbbc1c15b582",
+      "reviewed_advisories": []
+    }
+  ],
+  "advisory_count": 0,
+  "source_severity_note": {
+    "alert": 14,
+    "ghsa": "GHSA-8g5g-8vmr-9782",
+    "dependabot_api_snapshot_severity": "critical",
+    "upstream_pillow_page_severity": "high",
+    "upstream_url": "https://github.com/python-pillow/Pillow/security/advisories/GHSA-8g5g-8vmr-9782",
+    "note": "Keep source labels distinct; both identify affected JPEG thumbnail path and fixed Pillow13.0.0"
+  },
+  "positive_control_affected_versions": {
+    "Pillow@12.2.0": 34,
+    "pillow@12.2.0": 20,
+    "setuptools@84.0.0": 1
+  },
+  "positive_control_unique_pillow_advisories": 54
+}

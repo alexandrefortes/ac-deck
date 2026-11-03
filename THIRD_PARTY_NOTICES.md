@@ -60,7 +60,7 @@ community distribution.
 
 ## Binary distribution review
 
-The [v0.1.0-preview.1 release](https://github.com/alexandrefortes/ac-deck/releases/tag/v0.1.0-preview.1)
+The [v0.1.0-preview.2 release](https://github.com/alexandrefortes/ac-deck/releases/tag/v0.1.0-preview.2)
 provides the matching dependency-source companion, inventory and checksums.
 This preview builds CPython 3.13.5 from its pinned upstream sources without
 Berkeley DB or GDBM; those components of the older standalone interpreter

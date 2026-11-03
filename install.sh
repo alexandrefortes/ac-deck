@@ -2,9 +2,9 @@
 # Public installer for the exact community preview below. No GitHub login.
 set -euo pipefail
 
-release='v0.1.0-preview.1'
+release='v0.1.0-preview.2'
 bootstrap_sha256='263a563f54bfadad0ff3d4b47bcf01ac285c0092fb3ab74407cc71436e437cda'
-archive_sha256='f6e0b14ca8480217793d619bc7d6edb31a2666f486262681cecf301b79fbefb1'
+archive_sha256='72c1124a647fad0f7d03a1612aac6d9bda5deebd0e172ad9a6e541c1e851d28f'
 minimum_glibc='2.38'
 base="https://github.com/alexandrefortes/ac-deck/releases/download/$release"
 

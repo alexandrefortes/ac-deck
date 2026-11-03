@@ -1,7 +1,7 @@
 # Contributing to ac-deck
 
 ac-deck is a Python/SDL2 launcher around original Assetto Corsa on Steam Deck.
-The [v0.1.0-preview.1 release](https://github.com/alexandrefortes/ac-deck/releases/tag/v0.1.0-preview.1)
+The [v0.1.0-preview.2 release](https://github.com/alexandrefortes/ac-deck/releases/tag/v0.1.0-preview.2)
 provides an experimental installer/runtime and corresponding dependency
 sources. Physical Deck behavior remains untested. Players use the
 [installation guide](docs/installation.md) without an SDK or source checkout.
@@ -83,6 +83,12 @@ The [content review](docs/content-rights.md) covers specified quotations and
 jurisdictions; current gallery PNGs are omitted.
 
 ## Release evidence
+
+Preview 1 was withdrawn after dependency advisories. Preserve its tag and
+artifacts; use the [security review](docs/security-review.md) and current pins
+for new work. Run `git diff --check` and review current relevant advisories
+before publishing any new candidate.
+
 
 Use the [preview/supported-release checklist](docs/community-release-checklist.md).
 Each immutable candidate identifies sources, runtime, notices, companion,

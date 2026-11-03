@@ -1,6 +1,43 @@
 # Community candidate validation
 
-## Public installation preview: 3 November 2026
+## Security-corrected preview 2: 3 November 2026
+
+Version **v0.1.0-preview.2** uses the versioned community cycle with a
+separate reviewed no-BDB/GDBM SDK, Pillow 13.0.0 and setuptools 84.1.0.
+The six exact locked Python packages have no matching current GitHub-reviewed
+advisories; the query's positive controls reproduce the 55 old-pin alerts.
+Read the [security review](security-review.md) for scope and OS trust limits.
+This does not establish that every native dependency has no vulnerability.
+
+- Runtime: 46218949 bytes, SHA-256 `72c1124a647fad0f7d03a1612aac6d9bda5deebd0e172ad9a6e541c1e851d28f`.
+- Executable SHA-256: `6dfa64afe517b77adbe5c75ef8e04d907b42beb611535fef38570ae576a2e281`.
+- Manifest SHA-256: `24c9ce8516a00b1cb2c4e95689733798fa63c2fb9a4a3bc293e7f6d5b5e32eff`.
+- Frozen inputs: 117 files, including 112 selected canonical exports.
+- 207 public source tests and 130 compiled tests passed without failures or
+  skips. Two explicitly named process fixtures run in the source suite only;
+  the compiled subprocess/network/device guard remains enforced.
+- Bootstrap, nine informational CLIs, relocation with spaces, actual archived
+  code correspondence and ten offscreen compositions passed. No source fallback.
+- 135 mapped ELF files, GLIBC maximum 2.38, 103 SDK notices.
+- Dependency companion: 278 materials, 69
+  components, 389623637 bytes; SHA-256 `89bebd9e5ec368b4cd5f482a83c9ad5b5720029aef3bbd4bfeaf6f95860515a0`.
+- The new SDK has 12,388 inventoried entries; manifest SHA-256
+  `8e7eb0ff335ab9b0d92d9d846203afbee833a8eead8e895b66236d77f19c2941`.
+- Canonical Linux suite: 3,158 tests, no failures/errors, 45 skips (40 Lua,
+  four Node classes, one SDL discovery). Packaged SDL is checked explicitly.
+- Cycle wall time: 243.647 s. PyInstaller: 13.134 s; tar/gzip: 13.348 s.
+  Stage scopes overlap; these are not additive independent measurements.
+
+The [release record](https://github.com/alexandrefortes/ac-deck/releases/tag/v0.1.0-preview.2)
+binds matching committed source, bootstrap, dependency material and checksums.
+The disclaimer/terminal acknowledgement and automated installation fixtures
+passed. No real Steam, game, race, microphone or paid API was exercised.
+**Physical Deck installation, play, performance and acceptance remain untested.**
+The records below retain their original historical identities and limits.
+
+## Withdrawn preview 1: historical validation, 3 November 2026
+
+**Withdrawn for dependency security corrections. Do not install this archive.**
 
 Version **v0.1.0-preview.1** uses the versioned community cycle with the
 separate CPython SDK built without Berkeley DB/GDBM. The old SDK and candidates

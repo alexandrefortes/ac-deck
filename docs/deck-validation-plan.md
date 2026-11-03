@@ -1,20 +1,20 @@
 # Physical Steam Deck validation plan
 
 **Status: prepared, not executed.** This plan is for the experimental
-**v0.1.0-preview.1** package. Automated validation, public availability,
+**v0.1.0-preview.2** package. Automated validation, public availability,
 physical observations and user acceptance remain separate. Preparing or
 publishing the preview does not start a monitor, Steam, the launcher or a race.
 
 ## Record the exact candidate
 
-- Archive: `ac-deck-linux-x86_64.tar.gz`, 45773729 bytes.
-- Archive SHA-256: `f6e0b14ca8480217793d619bc7d6edb31a2666f486262681cecf301b79fbefb1`.
-- Executable SHA-256: `357309498277ddf88c2163231d5c0bfe426fb7628c895ffeca1e010e5f4201db`.
-- Manifest SHA-256: `5df8d203d75c865aeb546c5288288a00e52e9c0384f4b0a41ddb34d4ba6ab126`.
+- Archive: `ac-deck-linux-x86_64.tar.gz`, 46218949 bytes.
+- Archive SHA-256: `72c1124a647fad0f7d03a1612aac6d9bda5deebd0e172ad9a6e541c1e851d28f`.
+- Executable SHA-256: `6dfa64afe517b77adbe5c75ef8e04d907b42beb611535fef38570ae576a2e281`.
+- Manifest SHA-256: `24c9ce8516a00b1cb2c4e95689733798fa63c2fb9a4a3bc293e7f6d5b5e32eff`.
 - Required GLIBC reaches 2.38. Record actual Deck model, SteamOS,
   Steam and selected Proton versions; build-host versions do not prove Deck compatibility.
 
-Use the [release record](https://github.com/alexandrefortes/ac-deck/releases/tag/v0.1.0-preview.1)
+Use the [release record](https://github.com/alexandrefortes/ac-deck/releases/tag/v0.1.0-preview.2)
 for the matching source tag, installer, checksums and dependency sources.
 
 ## New user's installation

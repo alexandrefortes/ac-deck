@@ -1,6 +1,6 @@
 # Update packaging and recover an installation
 
-**v0.1.0-preview.1 is a new-install preview.** The one-command bootstrap may repeat
+**v0.1.0-preview.2 is a new-install preview.** The one-command bootstrap may repeat
 setup for this exact verified runtime; it does not upgrade an older or edited
 distribution. The new product sources and rebuilt Python are outside the older
 `851f8e2d…` → `0638856a…` packaging-only transition tested below. Do not use
@@ -16,6 +16,11 @@ This procedure is prepared and tested with synthetic installations. It does not
 mean that an update has been applied to your Steam Deck or accepted in a race.
 Publication and the [dependency license review](dependency-license-review.md)
 remain separate gates.
+
+Preview 1 was withdrawn for dependency security corrections. Do not install
+or roll back to it. Keep an affected installation intact for diagnosis and
+use the documented restoration procedure; the README command refuses a
+different existing distribution rather than silently replacing it.
 
 ## Requirements
 

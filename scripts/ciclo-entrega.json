@@ -1,20 +1,93 @@
 {
   "schema": 1,
-  "minimum_python": [3, 10],
+  "minimum_python": [
+    3,
+    10
+  ],
   "target": "linux-x86_64",
   "delivery": "entrega/deck",
   "sdk": {
     "python": "3.13.5",
-    "packages": {"pyinstaller": "6.22.3", "pyinstaller-hooks-contrib": "2026.9", "Pillow": "12.2.0"},
+    "packages": {
+      "pyinstaller": "6.22.3",
+      "pyinstaller-hooks-contrib": "2026.9",
+      "Pillow": "13.0.0"
+    },
     "maximum_glibc": "2.39"
   },
   "test_groups": {
-    "rogue-variety": ["tests.test_rogue_variety", "tests.test_rogue", "tests.test_rogue_ui", "tests.test_rogue_generator", "tests.test_results", "tests.test_campaigns", "tests.test_session_conditions"],
-    "gamepad-fx": ["tests.test_current_settings", "tests.test_gamepad_fx", "tests.test_session_settings", "tests.test_native_menu", "tests.test_csp_launcher", "tests.test_csp_requested_settings", "tests.test_user_settings", "tests.test_car_damage", "tests.test_session_conditions", "tests.test_assists_menu", "tests.test_ciclo_build"],
-    "consistent-settings": ["tests.test_track_blacklist", "tests.test_session_settings", "tests.test_native_menu", "tests.test_csp_launcher", "tests.test_csp_requested_settings", "tests.test_event_synthetizer", "tests.test_ai_events", "tests.test_rogue", "tests.test_rogue_ui", "tests.test_rogue_generator", "tests.test_campaigns", "tests.test_jogo_deck", "tests.test_rogue_toasty", "tests.test_rogue_toasty_install", "tests.test_rogue_toasty_session", "tests.test_graphics_settings", "tests.test_session_conditions"],
-    "remove-hud-linear": ["tests.test_hud_cleanup", "tests.test_shadow_distance", "tests.test_native_menu", "tests.test_graphics_settings", "tests.test_graphics_profiles", "tests.test_session_conditions", "tests.test_deck_profiles_comfort", "tests.test_jogo_deck", "tests.test_rogue_toasty_runtime", "tests.test_ciclo_build", "tests.test_csp_launcher", "tests.test_csp_requested_settings", "tests.test_removed_csp_quality", "tests.test_session_settings"],
-    "cycle": ["tests.test_ciclo_publication", "tests.test_ciclo_entrega", "tests.test_ciclo_build", "tests.test_atualizar_entrega_deck", "tests.test_preparar_entrega_deck"],
-    "delivery": ["tests.test_atualizar_entrega_deck", "tests.test_preparar_entrega_deck"],
-    "full": ["discover", "-s", "tests"]
+    "rogue-variety": [
+      "tests.test_rogue_variety",
+      "tests.test_rogue",
+      "tests.test_rogue_ui",
+      "tests.test_rogue_generator",
+      "tests.test_results",
+      "tests.test_campaigns",
+      "tests.test_session_conditions"
+    ],
+    "gamepad-fx": [
+      "tests.test_current_settings",
+      "tests.test_gamepad_fx",
+      "tests.test_session_settings",
+      "tests.test_native_menu",
+      "tests.test_csp_launcher",
+      "tests.test_csp_requested_settings",
+      "tests.test_user_settings",
+      "tests.test_car_damage",
+      "tests.test_session_conditions",
+      "tests.test_assists_menu",
+      "tests.test_ciclo_build"
+    ],
+    "consistent-settings": [
+      "tests.test_track_blacklist",
+      "tests.test_session_settings",
+      "tests.test_native_menu",
+      "tests.test_csp_launcher",
+      "tests.test_csp_requested_settings",
+      "tests.test_event_synthetizer",
+      "tests.test_ai_events",
+      "tests.test_rogue",
+      "tests.test_rogue_ui",
+      "tests.test_rogue_generator",
+      "tests.test_campaigns",
+      "tests.test_jogo_deck",
+      "tests.test_rogue_toasty",
+      "tests.test_rogue_toasty_install",
+      "tests.test_rogue_toasty_session",
+      "tests.test_graphics_settings",
+      "tests.test_session_conditions"
+    ],
+    "remove-hud-linear": [
+      "tests.test_hud_cleanup",
+      "tests.test_shadow_distance",
+      "tests.test_native_menu",
+      "tests.test_graphics_settings",
+      "tests.test_graphics_profiles",
+      "tests.test_session_conditions",
+      "tests.test_deck_profiles_comfort",
+      "tests.test_jogo_deck",
+      "tests.test_rogue_toasty_runtime",
+      "tests.test_ciclo_build",
+      "tests.test_csp_launcher",
+      "tests.test_csp_requested_settings",
+      "tests.test_removed_csp_quality",
+      "tests.test_session_settings"
+    ],
+    "cycle": [
+      "tests.test_ciclo_publication",
+      "tests.test_ciclo_entrega",
+      "tests.test_ciclo_build",
+      "tests.test_atualizar_entrega_deck",
+      "tests.test_preparar_entrega_deck"
+    ],
+    "delivery": [
+      "tests.test_atualizar_entrega_deck",
+      "tests.test_preparar_entrega_deck"
+    ],
+    "full": [
+      "discover",
+      "-s",
+      "tests"
+    ]
   }
 }

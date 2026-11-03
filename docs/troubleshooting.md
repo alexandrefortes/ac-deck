@@ -1,6 +1,6 @@
 # Troubleshooting
 
-The current download is **v0.1.0-preview.1**, an experimental community
+The current download is **v0.1.0-preview.2**, an experimental community
 installer and runtime. Automated checks are recorded in
 [build validation](build-validation.md); physical Deck support is unverified.
 

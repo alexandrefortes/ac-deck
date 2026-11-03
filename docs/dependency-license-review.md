@@ -1,4 +1,8 @@
-# Dependency review for v0.1.0-preview.1
+# Dependency review for v0.1.0-preview.2
+
+Preview 1 was withdrawn after confirmed dependency advisories. Preview 2 uses
+Pillow 13.0.0 and setuptools 84.1.0; see the [security decision](security-review.md)
+and the [preserved preview 1 review](../archive/dependency-license-review-v0.1.0-preview.1.md).
 
 This preview uses a separately built CPython 3.13.5 without Berkeley DB or
 GDBM. The former Sleepycat compatibility question is closed for this selected
@@ -9,19 +13,19 @@ Physical Steam Deck installation and performance remain untested.
 
 ## Exact distribution
 
-The [preview release](https://github.com/alexandrefortes/ac-deck/releases/tag/v0.1.0-preview.1)
+The [preview release](https://github.com/alexandrefortes/ac-deck/releases/tag/v0.1.0-preview.2)
 provides the runtime, bootstrap, checksums and corresponding dependency-source
 companion. The source tag and release record identify matching application
 sources. Use this exact set together:
 
 | Material | Identity |
 | --- | --- |
-| Runtime archive | 45773729 bytes; SHA-256 `f6e0b14ca8480217793d619bc7d6edb31a2666f486262681cecf301b79fbefb1` |
-| Executable | SHA-256 `357309498277ddf88c2163231d5c0bfe426fb7628c895ffeca1e010e5f4201db` |
-| Dependency-source companion | 385919586 bytes; SHA-256 `77a296984f0d07c5239f29630e44e7594a19899d56258a56c046f503fd260889` |
-| [Dependency inventory](../licenses/dependency-sources.json) | SHA-256 `05d9cc8128641eee1ee819fd959c84c8e2444fe09f02f63be1da2a42f1487023`; 67 component records and 252 source/notice/recipe files |
-| Runtime ELF inventory | 136 files, mapped to this candidate in the dependency inventory |
-| Selected dependency notices | 84 original files, copied into runtime `licenses/sdk/` |
+| Runtime archive | 46218949 bytes; SHA-256 `72c1124a647fad0f7d03a1612aac6d9bda5deebd0e172ad9a6e541c1e851d28f` |
+| Executable | SHA-256 `6dfa64afe517b77adbe5c75ef8e04d907b42beb611535fef38570ae576a2e281` |
+| Dependency-source companion | 389623637 bytes; SHA-256 `89bebd9e5ec368b4cd5f482a83c9ad5b5720029aef3bbd4bfeaf6f95860515a0` |
+| [Dependency inventory](../licenses/dependency-sources.json) | SHA-256 `cd3a95e54ba6fc9be5716f8ced932490e55e964a6f1df1e96ef521971931909a`; 69 component records and 278 source/notice/recipe files |
+| Runtime ELF inventory | 135 files, mapped to this candidate in the dependency inventory |
+| Selected dependency notices | 103 original files, copied into runtime `licenses/sdk/` |
 
 The immutable candidate must match these identities before promotion. The
 [build record](build-validation.md) and [delivery workflow](community-delivery.md)
@@ -45,10 +49,16 @@ ceiling of 2.39. The previous standalone SDK was preserved. Its files and
 Berkeley DB sources are historical references, not inputs to this runtime.
 
 The six native libraries retain their Debian/Arch origin evidence, exact
-source descriptors, patches and build recipes. Pillow 12.2.0 uses the exact
+source descriptors, patches and build recipes. Pillow 13.0.0 uses the exact
 pinned official wheel and full composite notice. Its identified vendor
-sources are included; the original wheel cache and auditwheel rewrite were
-not reproduced. Hashes identify selected bytes, not signature verification
+sources and pinned wheel recipes are included; the original wheel cache and
+auditwheel rewrite were not reproduced. The full Pillow 13 notice adds the
+Tcl/Tk header terms. Original AOM and LibYuv patent grants are supplied as
+separate source-bound notices. Setuptools 84.1.0 is a build input; its MIT project license
+does not replace bundled vendors' LGPL, Apache, MPL or other terms. The full
+sdist and original vendor notices are retained. The actual V2 PYZ, base-library
+ZIP and external code contain no setuptools or checked vendor modules; that
+build-only classification applies to this candidate. Hashes identify selected bytes, not signature verification
 or byte-identical rebuilding on every host.
 
 ## License routes and recipient rights
@@ -58,6 +68,7 @@ or byte-identical rebuilding on every host.
 | CPython and its six linked dependencies | Python historical/PSF terms, Apache-2.0, Zlib, bzip2, MIT and applicable public-domain material; original notices, change summary, sources and recipe retained. |
 | PyInstaller 6.22.3 | GPL-2.0-or-later with its supplied exception for covered bootloader/loader files; Apache-2.0 runtime hooks. The exception does not waive other dependency obligations. |
 | pyinstaller-hooks-contrib 2026.9 | Original build-hook GPL and runtime-hook Apache terms retained; a build tool's presence does not assert that every hook is embedded. |
+| Setuptools 84.1.0 | MIT project license with separate original vendor notices and source, including LGPL-3.0, Apache-2.0 and MPL-2.0 material; build input, not a blanket MIT classification. |
 | Shared LGPL libraries | Applicable full license/copyright notices, exact sources/patches/build material and [replacement instructions](dependency-sources.md#replacing-a-library). Recipients may modify/replace these libraries for their own use and reverse engineer the combination to debug those modifications. |
 | GCC runtime libraries | GPL-3.0-or-later with GCC Runtime Library Exception 3.1; exact package sources and exception notices retained. |
 | D-Bus | AFL-2.1 alternative selected, with its original notice, accompanying Expat/Tcl notices and exact source/build material; no GPL alternative selected for this library. |
@@ -73,12 +84,13 @@ remain intact. Corresponding sources and notices are available from the same
 release as the runtime, without private repository access or a paid account.
 Project-owned PolyForm terms do not supersede those component rights.
 
-A disposable copy of this candidate accepted the existing Ubuntu ALSA 1.2.11
-library in place of its 1.2.14 library. Informational CLI, `SDL_Init(0)` and
-`SDL_Quit` passed; the reported version and `/proc` mapped-file hash identified
-the replacement. The original candidate and SDK were unchanged. This proves
-that exercised replacement mechanism, not every ABI or hardware path. Exact
-hashes and observations belong to the [build record](build-validation.md).
+A disposable copy of this V2 candidate accepted the Ubuntu ALSA 1.2.11
+library in place of its supplied 1.2.14 library. Informational CLI,
+`SDL_Init(0)`/`SDL_Quit`, reported version and `/proc` mapped-file hash all
+confirmed the replacement. Only that library changed in the copy; the entire
+candidate tree, modes, archive and SDK remained unchanged. The
+[build record](build-validation.md) identifies the exercised hashes. This
+proves that replacement mechanism, not every ABI or hardware path.
 
 ## Content and evidence limits
 
@@ -89,10 +101,9 @@ Game/DLC data, CSP, optional camera archives and private album/Toasty image/audi
 are excluded. Missing optional media does not remove Rogue progression or
 make optional mods prerequisites. See [integrations](third-party-integrations.md).
 
-The public source suite records 207 tests. Compiled verification records 130
-tests with no errors, failures or skips, plus ten offscreen images. Two exact
-fixtures that launch Python interpreters run in the source suite and appear
-as `source_process_tests` in the compiled receipt; they are not claimed as
-compiled subprocess coverage. The private suite's 3,158 tests and 45 skips
-are separate evidence, not public prerequisites. Automated results do not
-establish real Steam Deck play or supported-release status.
+The [build record](build-validation.md) identifies the final public source,
+compiled and offscreen checks. Two exact fixtures that launch Python
+interpreters run in the source suite and appear as `source_process_tests` in
+the compiled receipt; they are not claimed as compiled subprocess coverage.
+Private tests are separate evidence, not public prerequisites. Automated
+results do not establish real Steam Deck play or supported-release status.

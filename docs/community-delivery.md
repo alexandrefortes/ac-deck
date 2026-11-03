@@ -196,6 +196,12 @@ Promotion is a separate review of an existing immutable candidate:
    redistribution and source/history/privacy checks. Include corresponding
    dependency sources and required notices for the actual binaries. An older
    preview's source archive does not cover a newer SDK by inference.
+   Review current security advisories against exact locked versions and the
+   actual runtime paths before binary promotion. Record advisories, affected
+   versions, reachability, fixes and query scope. Applicable critical issues
+   block promotion; withdraw an affected recommendation and publish a new
+   immutable version after correction. A passing build does not satisfy
+   this gate. See the [security review](security-review.md).
 4. A supported release requires the [physical Deck checks](deck-validation-plan.md)
    for the exact archive. An explicitly experimental preview may be published
    after its automated and distribution checks, with physical installation,
@@ -224,6 +230,7 @@ runtime policy or agent instructions:
 | Inputs and checks | SDK/recipe inventory hashes, validation receipt hashes, failures/skips and remaining limits |
 | Downloads | Exact runtime archive, bootstrap and dependency-source filenames, byte sizes and SHA-256 values |
 | Licenses | Reviewed component inventory, notices and corresponding-source/build material |
+| Security | Exact reviewed versions, current advisories, reachability, fixes and evidence scope |
 | Deck result | Hardware, SteamOS, Proton, tested archive hash, scenarios and acceptance |
 | Update and recovery | Supported prior versions, data compatibility, preserved data and previous verified version/hash |
 | Authorization and publication | User's approved scope, approval reference, actual source/tag/download locations and verified remote hashes |

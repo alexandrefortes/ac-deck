@@ -1,6 +1,6 @@
 # Third-party integrations and distribution
 
-This inventory describes **v0.1.0-preview.1** and its public source/runtime
+This inventory describes **v0.1.0-preview.2** and its public source/runtime
 boundary. The [dependency review](dependency-license-review.md) identifies the
 exact compiled distribution. Physical Steam Deck compatibility remains untested.
 Official sources were checked on 3 November 2026; a public download alone is
@@ -8,6 +8,8 @@ not permission to mirror or bundle a mod.
 
 ## Required game environment
 
+Use updated SteamOS and system certificates for HTTPS downloads and optional
+AI services; see the scoped [security review](security-review.md).
 The player supplies legitimate Steam, Assetto Corsa and Proton. **CSP 0.3.1 is
 the only required game mod.** AGA, extra cameras, Sidekick, Sol, Pure and Content
 Manager are not installation prerequisites. The [one-command installer](installation.md)
