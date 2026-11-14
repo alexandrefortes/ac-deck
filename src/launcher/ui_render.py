@@ -182,7 +182,7 @@ def _shell(w, menu):
     _text(w, 'Single player', 29, 758, 162, 1.3, (157, 143, 147))
     w.rect(216, 63, 1064, 1, (33, 34, 36))
     view = str(getattr(menu, 'view', 'drive'))
-    labels = {'drive': 'DRIVE', 'events': 'EVENTS', 'synth': 'EVENT SYNTHETIZER',
+    labels = {'drive': 'DRIVE', 'events': 'EVENTS', 'synth': 'RACE SYNTHETIZER',
               'history': 'HISTORY', 'settings': 'SETTINGS'}
     _text(w, 'YOUR NEXT DRIVE  /  '+labels.get(view, view.upper()),
           248, 24, 760, 1.4, MUTED)
@@ -291,6 +291,7 @@ def _card(w, item, focused, track=False):
     x, y, width, height = (int(item[key]) for key in ('x', 'y', 'w', 'h'))
     w.rect(x, y, width, height, SURFACE)
     if item.get('synthesis_card'):
+        group = item.get('result_group')
         image_height=height-72
         _image(w,item.get('image'),x+1,y+1,width-2,image_height,
                fit='cover' if track else 'contain',background=(8,10,12))
@@ -300,7 +301,11 @@ def _card(w, item, focused, track=False):
         metadata=' / '.join(str(value) for value in (item.get('value'),item.get('subtitle')) if value)
         _text(w,metadata,x+16,y+image_height+44,width-32,1.4,MUTED,
               scroll_key='layout:'+item['id'] if track else 'car-meta:'+item['id'])
-        _frame(w,x,y,width,height,YELLOW if focused else LINE,2 if focused else 1)
+        if group:
+            w.rect(x+12, y+10, 88, 26, (17, 19, 21))
+            _text(w, group, x+20, y+16, 72, 1.3)
+            w.rect(x, y+height, width, 48, SURFACE)
+        _frame(w,x,y,width,height+48 if group else height,YELLOW if focused else LINE,2 if focused else 1)
         return
     if item.get('compact'):
         photo=100 if track else 160
@@ -483,7 +488,7 @@ def _rogue_objective(w, item):
     x, y, width, height = (int(item[key]) for key in ('x', 'y', 'w', 'h'))
     w.rect(x, y, width, height, (36, 33, 24))
     w.rect(x, y, 4, height, YELLOW)
-    _text(w, item['label'], x+20, y+14, width-40, 3.7, YELLOW)
+    _text(w, item['label'], x+20, y+14, width-40, item.get('scale', 3.7), YELLOW)
 
 
 def _rogue_result(w, item):
@@ -677,12 +682,16 @@ def _key_dialog(w, menu):
     masked = '*'*min(76, len(getattr(menu, 'key_buffer', '')))
     _text(w, masked or 'Type or paste your key', 260, 380, 768,
           1.8, TEXT if masked else MUTED)
+    items = [{'id': 'key:field', 'x': 244, 'y': 365, 'w': 800, 'h': 45}]
     for index, (identity, label, xx) in enumerate(
             (('key:save', 'Save key', 460), ('key:cancel', 'Cancel', 680)), 1):
-        _button(w, {'id': identity, 'label': label, 'x': xx, 'y': 460,
-                    'w': 180, 'h': 52, 'primary': index == 1}, focused == index)
+        item = {'id': identity, 'label': label, 'x': xx, 'y': 460,
+                'w': 180, 'h': 52, 'primary': index == 1}
+        items.append(item)
+        _button(w, item, focused == index)
     _text(w, 'B Cancel     A Confirm     Tab / D-pad Change focus',
           270, 550, 915, 1.4, MUTED)
+    return items
 
 
 def _brand_popup(w, items, focus_id):
@@ -730,7 +739,22 @@ def draw(menu, w):
         w.rect(216, 65, 3, 24, YELLOW)
         _text(w, message, 248, 70, 1000, 1.4, (230, 212, 154))
     if getattr(menu, 'key_dialog', False):
-        _key_dialog(w, menu)
+        items = _key_dialog(w, menu)
+    help_state = getattr(w, 'settings_help', None)
+    if help_state is not None:
+        tooltip = help_state.update(menu, items, w._text_frame_time)
+        if tooltip is not None:
+            item, description = tooltip
+            width, height = 640, 62
+            x = min(item['x'], 1264-width)
+            y = item['y'] + item['h'] + 6
+            if menu.key_dialog:
+                y = 584
+            elif y + height > 680:
+                y = item['y'] - height - 6
+            w.rect(x, y, width, height, BG)
+            _frame(w, x, y, width, height, YELLOW)
+            _text(w, description, x+14, y+10, width-28, 1.6, TEXT, lines=2)
     if getattr(menu, 'quit_confirmation', False):
         w.rect(366, 270, 680, 242, (25, 26, 28))
         _frame(w, 366, 270, 680, 242, YELLOW)

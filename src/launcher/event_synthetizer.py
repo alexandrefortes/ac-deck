@@ -10,7 +10,7 @@ import random
 import uuid
 
 from . import file_io as safe
-from . import content, conditions, session_settings
+from . import catalogue, content, conditions, session_settings
 
 VARIABLE = ('car', 'track', 'layout', 'weather', 'time_minutes')
 DERIVED = ('mode', 'event', 'skin')
@@ -59,7 +59,8 @@ def candidates(catalog,base,fixed=None):
     groups=[dict(g,cars=[c for c in g['cars'] if fixed['car'] is None or c==fixed['car']])
             for g in catalog['synthesis_classes']]
     groups=[g for g in groups if g['cars']]
-    tracks=[t for t in _tracks(catalog,base) if fixed['track'] is None or [t['id'],t['layout']]==fixed['track']]
+    tracks=[t for t in _tracks(catalog,base) if track_allows_mode(t,2)
+            and (fixed['track'] is None or [t['id'],t['layout']]==fixed['track'])]
     if not groups or not tracks or not catalog['synthesis_weather']:
         raise ValueError('No compatible race candidates. Check fixed car/track, AI lanes and grid capacity.')
     return groups,tracks
@@ -129,6 +130,7 @@ def discover(game, *, catalog=None):
         tags = {v.casefold() for v in tags if isinstance(v, str)} if isinstance(tags, list) else set()
         # A2B não é circuito de voltas, mesmo quando o layout contém fast_lane.ai.
         track['synthesis_race'] = 'a2b' not in tags and info.get('race') is not False
+        track['drift_only'] = catalogue.dedicated_drift_layout(track['id'], track['layout'], info)
     compatible = []
     for name in catalog['weather']:
         try:
@@ -144,6 +146,14 @@ def discover(game, *, catalog=None):
             compatible.append(name)
     catalog['synthesis_weather'] = compatible
     return catalog
+
+
+def track_allows_mode(track, mode):
+    """Eligibility for new challenges, including older catalog snapshots."""
+    dedicated = track.get('drift_only')
+    if dedicated is None:
+        dedicated = catalogue.dedicated_drift_layout(track['id'], track.get('layout', ''), {})
+    return mode == 4 or not dedicated
 
 
 def _tracks(catalog, base):
@@ -191,7 +201,7 @@ def generate(game, base, *, seed=None, fixed=None, catalog=None, blocked=(), blo
     return proposal, catalog
 
 
-def validate(game, proposal, *, catalog=None):
+def validate(game, proposal, *, catalog=None, minimum_ai=70):
     if (not isinstance(proposal, dict) or proposal.get('schema_version') not in (1,2)
             or not all(key in proposal for key in ('base', 'selection', 'class_id'))
             or any(not isinstance(proposal.get(key), str) for key in ('class_id', 'class_name', 'car_name', 'track_name'))):
@@ -200,6 +210,11 @@ def validate(game, proposal, *, catalog=None):
     base, chosen = proposal['base'], proposal['selection']
     if not isinstance(base, dict) or not isinstance(chosen, dict) or MARKER in base or MARKER in chosen:
         raise ValueError('Invalid event configuration')
+    if proposal['schema_version'] == 2 or 'ai' in chosen:
+        content.integer(chosen.get('ai'),minimum_ai,100,'AI level')
+    for selection in (base, chosen):
+        if 'ai_aggression' in selection:
+            content.integer(selection['ai_aggression'],0,100,'AI aggression')
     skin=None
     if proposal['schema_version']==2:
         fixed=pins(proposal.get('pins'))
@@ -209,7 +224,6 @@ def validate(game, proposal, *, catalog=None):
         if fixed['track'] is not None and [chosen.get('track'),chosen.get('layout')]!=fixed['track']:
             raise ValueError('Generated event changed the fixed track/layout')
         content.integer(chosen.get('laps'),1,99,'Laps')
-        content.integer(chosen.get('ai'),70,100,'AI level')
     group = next((row for row in catalog['synthesis_classes'] if row['id'] == proposal['class_id']), None)
     car = next((row for row in catalog['cars'] if row['id'] == chosen.get('car')), None)
     track = next((row for row in _tracks(catalog, base)

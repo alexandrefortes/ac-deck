@@ -121,6 +121,7 @@ def public_message(error):
     allowed = (*RESPONSE_ERRORS.values(),
         'Complete AI context exceeds 768 KiB. No request was sent; no metadata was cut.',
         'No compatible installed candidates. No API request was sent.',
+        'No compatible candidates. Check the blacklist and fixed car/track. No API request was sent.',
         'Unsupported reasoning effort. No API request was sent.',
         'One-time request must be text. No request was sent.',
         'One-time request must be valid text. No request was sent.',

@@ -124,6 +124,15 @@ class Session:
             number=signal.SIGKILL if self.clock()-self.stop_at>=2 else signal.SIGTERM
             self._signal(number)
 
+    def exclude_child(self,pid):
+        """Keep a known launcher child, such as victory audio, outside the game tree."""
+        with self.lock:
+            row=snapshot().get(pid)
+            if row is not None and pid!=self.pid and row[0]==os.getpid():
+                self.before[pid]=row
+                self.known.pop(pid,None)
+                self.live.pop(pid,None)
+
     def poll(self):
         with self.lock:
             code=self.process.poll()

@@ -21,7 +21,8 @@ from PyInstaller.loader.pyimod01_archive import PYZ_ITEM_NSPKG, PYZ_ITEM_PKG, Zl
 TESTS = tuple('tests.'+name for name in (
     'test_file_io', 'test_assists_config', 'test_practice_session', 'test_community_download',
     'test_install_discovery', 'test_community_install', 'test_steam_install_options',
-    'test_csp_community_install', 'test_rogue_variety', 'test_first_launch'))
+    'test_csp_community_install', 'test_rogue_variety', 'test_rogue_victory_music',
+    'test_first_launch'))
 
 # These source tests launch the test interpreter. In this probe sys.executable
 # deliberately identifies the product, and the audit guard forbids subprocesses.

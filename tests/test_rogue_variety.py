@@ -68,6 +68,13 @@ class RogueVarietyTests(unittest.TestCase):
         return dict(schema_version=1, session_id=attempt['session_id'], status='imported',
                     expected=expected, result=results.parse(native, expected))
 
+    def test_legacy_generated_race_accepts_default_ai(self):
+        self.base.pop('ai')
+        proposal, catalog = event_synthetizer.generate(self.game, self.base, seed=123)
+        self.assertEqual(1, proposal['schema_version'])
+        self.assertNotIn('ai', proposal['selection'])
+        self.assertIs(catalog, event_synthetizer.validate(self.game, proposal, catalog=catalog))
+
     def test_challenges_rotate_and_use_synthetic_native_goals(self):
         proposals = [self.proposal(stage) for stage in range(1, 13)]
         self.assertEqual([2, 1, 3, 4] * 3, [row['selection']['mode'] for row in proposals])

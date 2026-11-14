@@ -11,14 +11,14 @@ import math
 import random
 import re
 
-from . import ai_events, api_credentials, content, event_synthetizer as events, rogue_duration, rogue, session_settings
+from . import ai_events, api_credentials, content, event_synthetizer as events, rogue_duration, rogue, rogue_difficulty, session_settings
 
 
 MINUTES_MIN, MINUTES_MAX = 8 * 60, 16 * 60
 OPTION_LIMIT, HISTORY_LIMIT = 8, 20
 INSTRUCTIONS = (
     'Curate one single-player Rogue racing challenge. Return exactly the required JSON. '
-    'Select one supplied option_id and a target_position within that option target_range. '
+    'Select one supplied option_id and a podium target_position within that option target_range. '
     'Every other parameter is fixed by the application. Do not invent options or change '
     'car, track, weather, laps, AI level or rules. Seek variety using only the supplied '
     'classes and verified observations; missing metadata stays unknown. Similar classes '
@@ -136,10 +136,12 @@ def _target(run, profile, stage, grid, track, car):
 
 def _race_options(game, run, profile, catalog, stage, timings=None):
     base = deepcopy(run['base'])
+    settings = rogue_difficulty.run_settings(run)
     for marker in (events.MARKER, 'rogue'):
         base.pop(marker, None)
     base['opponents'] = max(1, _integer(base.get('opponents', 5), 0, 47, 'opponent count'))
-    base['ai'] = _integer(base.get('ai', 80), 70, 100, 'AI level')
+    base['ai'] = settings['ai']
+    base['ai_aggression'] = settings['aggression']
     base['laps'] = 3
     groups, tracks = _groups(catalog, base, run, stage)
     rng = random.Random(_seed(run, stage))
@@ -165,17 +167,19 @@ def _race_options(game, run, profile, catalog, stage, timings=None):
         option_base['laps'], duration = rogue_duration.choose(track, car_id, timings)
         selection = events._selected(option_base, car, track,
             rng.choice(sorted(catalog['synthesis_weather'])), rng.randint(MINUTES_MIN, MINUTES_MAX))
-        target = _target(run, profile, stage, selection['opponents'] + 1, track, car)
+        target = _target(run, rogue.progress_profile(profile, settings['difficulty']),
+                         stage, selection['opponents'] + 1, track, car)
+        target = rogue_difficulty.race_target(target, selection['opponents'] + 1, settings['difficulty'])
         proposal = dict(schema_version=2, seed=_seed(run, stage),
             created_utc=run.get('created_utc') or datetime.now(timezone.utc).isoformat(),
             class_id=group['id'], class_name=group['name'], class_source=group['source'],
             base=option_base, selection=selection, car_name=car['name'], track_name=track['name'],
             pins=events.pins(), challenge_id=_challenge_id(run, stage), stage=stage,
-            target_position=target, target_range=[max(1, target - 1), target],
+            target_position=target, target_range=[target if settings['difficulty'] == 'easy' else max(1, target - 1), target],
             generator='deterministic', rules={'finish_position': target}, duration=duration,
             catalog_sha256=hashlib.sha256(json.dumps(catalog, sort_keys=True, ensure_ascii=False).encode()).hexdigest())
-        proposal['brief'] = f"Finish P{target} or better. {selection['laps']} laps. Car and circuit are locked."
-        events.validate(game, proposal, catalog=catalog)
+        proposal['brief'] = rogue.race_brief(proposal)
+        events.validate(game, proposal, catalog=catalog, minimum_ai=rogue_difficulty.MIN_AI)
         options.append(proposal)
         if len(options) == OPTION_LIMIT:
             break
@@ -188,7 +192,8 @@ def _solo_templates(catalog, mode):
     kind = content.MODES[mode][1]
     objective_kind = 'TIME' if mode == 1 else 'POINTS'
     cars = {row['id'] for row in catalog['cars']}
-    tracks = {(row['id'], row['layout']) for row in catalog['tracks']}
+    tracks = {(row['id'], row['layout']) for row in catalog['tracks']
+              if events.track_allows_mode(row, mode)}
     result = []
     for row in catalog.get('events', []):
         goals = row.get('conditions', [])
@@ -217,13 +222,15 @@ def _solo_options(game, run, catalog, stage, mode, templates):
         templates = alternatives
     templates = list(templates)
     rng.shuffle(templates)
-    tier = 0 if stage <= 4 else 1 if stage <= 9 else 2
+    settings = rogue_difficulty.run_settings(run)
+    tier = 0 if settings['difficulty'] == 'easy' or stage <= 4 else 1 if stage <= 9 else 2
     base = deepcopy(run['base'])
     for marker in (events.MARKER, 'rogue'):
         base.pop(marker, None)
     base['opponents'] = 0
     base['laps'] = 1
-    base['ai'] = _integer(base.get('ai', 80), 70, 100, 'AI level')
+    base['ai'] = settings['ai']
+    base['ai_aggression'] = settings['aggression']
     options, seen = [], set()
     for template in templates:
         car = next(row for row in catalog['cars'] if row['id'] == template['car'])
@@ -232,7 +239,7 @@ def _solo_options(game, run, catalog, stage, mode, templates):
         group = next((row for row in catalog['synthesis_classes'] if car['id'] in row['cars']), None)
         if not group or not car.get('skins'):
             continue
-        value = template['conditions'][tier]['objective']
+        value = rogue_difficulty.solo_target(template['conditions'][tier]['objective'], mode, settings['difficulty'])
         key = (car['id'], track['id'], track['layout'], value)
         if key in seen:
             continue
@@ -297,7 +304,7 @@ def _payload(options, run, effort):
     if race:
         schema['required'].append('target_position')
         schema['properties']['target_position'] = dict(type='integer', minimum=1,
-            maximum=max(row['selection']['opponents'] + 1 for row in options))
+            maximum=max(option['target_range'][1] for option in options))
     context = dict(stage=options[0]['stage'], history=_history(run), options=values)
     body = dict(model=ai_events.MODEL, reasoning=dict(effort=effort), store=False,
         max_output_tokens=ai_events.OUTPUT_LIMIT, instructions=INSTRUCTIONS if race else SOLO_INSTRUCTIONS,
@@ -390,9 +397,13 @@ def generate(game, run, profile, *, catalog=None, client=None, api_key=None, eff
         if race:
             proposal['target_position'] = target
             proposal['rules'] = {'finish_position': target}
-            proposal['brief'] = f"Finish P{target} or better. {proposal['selection']['laps']} laps. Car and circuit are locked."
-        # A rede pode durar: conteúdo removido durante a escolha não é aplicado.
+            proposal['brief'] = rogue.race_brief(proposal)
+        # O conteúdo e a elegibilidade podem mudar durante a chamada.
         catalog = events.discover(game)
+        selection = proposal['selection']
+        if any((row['id'], row['layout']) == (selection['track'], selection['layout'])
+               and not events.track_allows_mode(row, selection['mode']) for row in catalog['tracks']):
+            raise GenerationError('The selected layout is no longer eligible for this Rogue mode. Run kept.')
     validate(game, proposal, catalog=catalog)
     return proposal, catalog
 
@@ -442,13 +453,7 @@ def validate(game, proposal, *, catalog=None):
     grid = _integer(selection.get('opponents'), 1, 47, 'opponent count') + 1
     _integer(selection.get('laps'), 1, 3, 'lap count')
     _integer(selection.get('time_minutes'), MINUTES_MIN, MINUTES_MAX, 'time of day')
-    target = _integer(proposal.get('target_position'), 1, grid, 'target position')
-    bounds = proposal.get('target_range')
-    if (not isinstance(bounds, list) or len(bounds) != 2
-            or any(type(value) is not int for value in bounds)
-            or not 1 <= bounds[0] <= target <= bounds[1] <= grid
-            or proposal.get('rules') != {'finish_position': target}):
-        raise ValueError('Invalid Rogue challenge rules.')
+    rogue._race_goal(proposal, grid, require_rules=True)
     if selection.get('mode') != 2 or selection.get('event'):
         raise ValueError('Rogue requires an installed lap-race circuit.')
-    return events.validate(game, proposal, catalog=catalog)
+    return events.validate(game, proposal, catalog=catalog, minimum_ai=rogue_difficulty.MIN_AI)

@@ -6,9 +6,9 @@
       "origin_community_sha256": "e5f0e0648a641488a87a99a9001582580d5bc5a6dd7fabe3a81a4f4e7db2f3f0",
       "origin_community_size_bytes": 30180,
       "path": "scripts/build_launcher_linux.py",
-      "sha256": "88db1d9fa0d98b1d9f46958fac89c1371648ea1861d03dc750cdde8d007108a7",
-      "size_bytes": 32188,
-      "status": "absorbed"
+      "sha256": "537b7d4060338d1a43f0dce4b48a266a576b14ebe7fee3e59884c8912da866d4",
+      "size_bytes": 32433,
+      "status": "integrated"
     },
     {
       "export_sha256": null,
@@ -24,9 +24,9 @@
       "origin_community_sha256": "bbe402fca773028907e75a6c10c5b20981f5728f988837e50435f4db7a5e8f68",
       "origin_community_size_bytes": 33728,
       "path": "src/launcher/application.py",
-      "sha256": "3208bbeb6fcdce414a1842a33bab90130ac66352c9bcfeec19c753b805009500",
-      "size_bytes": 35970,
-      "status": "absorbed"
+      "sha256": "c8b8dca705d2dfb22322591702b074f22389e821d29ed17bd9cfce7c7ef50b00",
+      "size_bytes": 38980,
+      "status": "integrated"
     },
     {
       "export_sha256": "20f13766bdf2cca4b64d5570c5469206afd0f5e986b42cd0feab9c99b325af51",
@@ -75,15 +75,20 @@
     }
   ],
   "reconciliation": {
-    "canonical_source_commit": "60bf9de196a7ccc27b5019c43370c3d309c451cf",
+    "canonical_source_commit": "8289e0b634af6184a0c89ac99eb7fc30f5cfd70b",
     "pending_shared_differences": [],
-    "previous_source_commit": "5daf0c8f5db3789d288e8572f087c645121995b3",
-    "previous_source_manifest_sha256": "1b5197bdb538a4784ad8fe1bac64d19b5b99e8b80f0aac7e608cc1f8af48cecb",
+    "previous_source_commit": "60bf9de196a7ccc27b5019c43370c3d309c451cf",
+    "previous_source_manifest_sha256": "c04e5a33f5610e4298e96a2a7199c088884f324386e5d0ee3be8c6c6c2d9f5f2",
     "reviewed_plan_sha256": "4da31995225259c613aece3682fe2013a8bcaf7a40f827b42a70c1f57e613228",
-    "source_manifest_sha256": "c04e5a33f5610e4298e96a2a7199c088884f324386e5d0ee3be8c6c6c2d9f5f2",
+    "source_manifest_sha256": "ebba8ae873c67917a6f72ad2f690bc8e4266acb13ca5daeec6de107ded2bdfbd",
     "source_tree": "working-tree",
-    "status": "absorbed"
+    "status": "integrated",
+    "working_tree_integrations": [
+      "scripts/build_launcher_linux.py",
+      "src/launcher/application.py",
+      "src/launcher/event_synthetizer.py"
+    ]
   },
   "schema_version": 1,
-  "scope": "Original community installer deltas preserved with provenance; current bytes absorbed into canonical working-tree export"
+  "scope": "Original community installer deltas preserved with provenance and incorporated into the curated export"
 }

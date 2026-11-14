@@ -1,10 +1,10 @@
 # Update packaging and recover an installation
 
-**v0.1.0-preview.2 is a new-install preview.** The one-command bootstrap may repeat
+**v0.1.0-preview.3 is a new-install preview.** The one-command bootstrap may repeat
 setup for this exact verified runtime; it does not upgrade an older or edited
-distribution. The new product sources and rebuilt Python are outside the older
-`851f8e2d…` → `0638856a…` packaging-only transition tested below. Do not use
-those earlier archives/checksums for this release.
+distribution. Preview 3 changes product sources after preview 2. Continue using
+your existing installation and its progress until a functional migration is
+available. The packaging-only transition tested below uses older archives.
 
 The current updater supports corrections to packaging, notices and bundled
 dependencies while the product source, Python version and data layout remain

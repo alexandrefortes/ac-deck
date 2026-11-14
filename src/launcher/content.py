@@ -169,7 +169,7 @@ def integer(value, minimum, maximum, name):
     return value
 
 
-def session(game, catalog, selection, *, csp=False, cfg=None, base_cfg=None, xinput=False):
+def session(game, catalog, selection, *, csp=False, cfg=None, base_cfg=None, xinput=False, rogue_hud=None):
     """Gera prática, corrida ou evento instalado a partir do perfil já funcional."""
     cfg = Path(cfg) if cfg is not None else Path(game)/'state/Assetto Corsa/cfg'
     def read(name):
@@ -181,6 +181,8 @@ def session(game, catalog, selection, *, csp=False, cfg=None, base_cfg=None, xin
     race.optionxform = str.upper
     race.read_string(game_config.profile_texts(Path(game))['race.ini'].decode('utf-8'))
     event_id = selection.get('event', '')
+    ai_aggression = (integer(selection['ai_aggression'], 0, 100, 'Agressividade IA')
+                     if 'ai_aggression' in selection else None)
     if event_id:
         item = next((p for p in catalog['events'] if p['id'] == event_id), None)
         if item is None:
@@ -224,7 +226,8 @@ def session(game, catalog, selection, *, csp=False, cfg=None, base_cfg=None, xin
         total = opponents+1
         race['RACE'] = dict(MODEL=car_id, MODEL_CONFIG='', SKIN=skin,
             TRACK=track_id, CONFIG_TRACK=layout, CARS=str(total),
-            AI_LEVEL=str(integer(selection.get('ai', 90), 70, 100, 'Nível IA')),
+            # O snapshot Rogue também permite repetir seus níveis abaixo de 70.
+            AI_LEVEL=str(integer(selection.get('ai', 90), 50 if ai_aggression is not None else 70, 100, 'Nível IA')),
             DRIFT_MODE='1' if session_type == 6 else '0', FIXED_SETUP='0',
             PENALTIES='1', JUMP_START_PENALTY='0')
         for index in range(total):
@@ -235,6 +238,8 @@ def session(game, catalog, selection, *, csp=False, cfg=None, base_cfg=None, xin
                 # O nivel individual multiplica RACE.AI_LEVEL no controlador nativo.
                 # Manter 100 aqui aplica a escolha global somente uma vez.
                 NATIONALITY='Brazil', NATION_CODE='BRA', AI_LEVEL='100')
+            if index and ai_aggression is not None:
+                race['CAR_'+str(index)]['AI_AGGRESSION'] = str(ai_aggression)
         race['SESSION_0'] = dict(NAME=MODES[mode][0], TYPE=str(session_type), SPAWN_SET=spawn,
             DURATION_MINUTES=str(integer(selection.get('minutes', 20), 0, 180, 'Minutos')) if session_type == 1 else '0')
         if session_type == 3:
@@ -306,6 +311,9 @@ def session(game, catalog, selection, *, csp=False, cfg=None, base_cfg=None, xin
         if 'ASSETTOCORSA' not in video:
             video.add_section('ASSETTOCORSA')
         video['ASSETTOCORSA']['HIDE_ARMS'] = '1' if selection['hide_driver_arms'] else '0'
+    race.remove_section('AC_DECK_ROGUE_HUD')
+    if rogue_hud is not None:
+        race['AC_DECK_ROGUE_HUD'] = rogue_hud
     texts = {'race.ini':ini_bytes(race), 'assists.ini':ini_bytes(assists), 'video.ini':ini_bytes(video)}
     candidates = [cfg/'gameplay.ini']
     if base_cfg is not None:
@@ -337,10 +345,12 @@ def session(game, catalog, selection, *, csp=False, cfg=None, base_cfg=None, xin
     return texts
 
 
-def write_session(game, catalog, selection, history, *, csp=False, cfg=None, base_cfg=None, xinput=False):
+def write_session(game, catalog, selection, history, *, csp=False, cfg=None, base_cfg=None,
+                  xinput=False, rogue_hud=None):
     """Aplica ao cfg declarado; guarda as configurações anteriores por sessão."""
     game, history = Path(game), Path(history)
-    texts = session(game, catalog, selection, csp=csp,cfg=cfg,base_cfg=base_cfg,xinput=xinput)
+    texts = session(game, catalog, selection, csp=csp,cfg=cfg,base_cfg=base_cfg,xinput=xinput,
+                    rogue_hud=rogue_hud)
     cfg = Path(cfg) if cfg is not None else game/'state/Assetto Corsa/cfg'
     safe.check_components(cfg)
     safe.check_components(history)

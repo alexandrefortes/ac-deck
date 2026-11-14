@@ -2,7 +2,7 @@
 from copy import deepcopy
 import time
 
-from . import content, favorites, rogue, rogue_rewards
+from . import content, favorites, rogue, rogue_difficulty, rogue_rewards
 
 
 _UNCONFIRMED = {
@@ -54,7 +54,7 @@ class RogueResultUI:
         if not attempt:
             return
         selection = attempt['selection']
-        profile = self.rogue_state['profile']
+        profile = rogue.progress_profile(self.rogue_state['profile'], run.get('difficulty', 'normal'))
         status = outcome['status']
         returned_reason = outcome.get('reason')
         reason_code = returned_reason if isinstance(returned_reason, str) and returned_reason in _UNCONFIRMED else None
@@ -100,7 +100,8 @@ class RogueResultUI:
                                 milestone=milestone, run_xp=run_xp, run_rewards=len(run_rewards),
                                 tone='victory' if status == 'won' else 'over' if ended else
                                 'retry' if status == 'lost' else 'unconfirmed',
-                                mode=run.get('mode', 'deterministic'), selection=deepcopy(selection),
+                                mode=run.get('mode', 'deterministic'), difficulty=run.get('difficulty', 'normal'),
+                                selection=deepcopy(selection),
                                 stage=outcome.get('stage', (run.get('last_challenge') or {}).get('stage', run.get('wins', 0)+1)),
                                 advance=status == 'lost' and not ended and run.get('challenge') is None,
                                 mastery=mastery, rewards=rewards)
@@ -108,6 +109,13 @@ class RogueResultUI:
         self.rogue_result_started = time.monotonic()
         self.focus_id = 'rogue-result-next'
         self.message = ''
+        if status == 'won' and self.rogue_victory_music is not None:
+            self.rogue_victory_music.show_result(attempt['id'])
+
+    def dismiss_rogue_result(self):
+        if self.rogue_victory_music is not None:
+            self.rogue_victory_music.stop()
+        self.rogue_result = None
 
     def rogue_result_visible(self):
         return self.view == 'rogue' and self.rogue_result is not None
@@ -125,19 +133,28 @@ class RogueResultUI:
                            primary=True, disabled=self.session_running)]
 
     def rogue_result_items(self):
+        victory = self.rogue_result['tone'] == 'victory'
         rows = [self._item('rogue-result', 'rogue-result', 248, 166, 1000, 166, '',
                            data=self.rogue_result, started=self.rogue_result_started,
                            disabled=True),
-                self._item('rogue-album', 'button', 248, 624, 200, 40, 'Achievements'),
-                self._item('rogue-result-back', 'button', 968, 624, 280, 40, 'Back to Rogue')]
-        return rows + self.result_content_items(self.rogue_result['selection'])
+                self._item('rogue-album', 'button', 256 if victory else 248, 624,
+                           234 if victory else 200, 40, 'Achievements'),
+                self._item('rogue-settings', 'button', 498 if victory else 464, 624,
+                           234 if victory else 220, 40, 'Rogue settings',
+                           disabled=self.session_running or self.rogue_pending is not None),
+                self._item('rogue-result-back', 'button', 764 if victory else 968, 624,
+                           234 if victory else 280, 40, 'Back to Rogue')]
+        return rows + self.result_content_items(self.rogue_result['selection'], victory=victory)
 
-    def result_content_items(self, selection, *, y=346, height=226):
+    def result_content_items(self, selection, *, y=346, height=226, victory=False):
         rows = []
         for card in self._cards(selection):
             car = card['id'] == 'car'
-            card.update(id='result-car' if car else 'result-track', x=248 if car else 756,
+            x = 248 if car else 756
+            card.update(id='result-car' if car else 'result-track', x=x,
                         y=y, w=492, h=height, synthesis_card=True, disabled=True)
+            if victory:
+                card['result_group'] = 'CAR' if car else 'CIRCUIT'
             rows.append(card)
             kind = 'cars' if car else 'tracks'
             row = dict(id=selection['car']) if car else dict(id=selection['track'], layout=selection.get('layout', ''))
@@ -146,7 +163,8 @@ class RogueResultUI:
                 contains = favorites.contains(collection, kind, row)
                 label = ('Remove from ' if contains else 'Add to ') + ('favorites' if index == 0 else 'blacklist')
                 rows.append(self._item('result-'+('car' if car else 'track')+'-'+name, 'button',
-                                       (248 if car else 756)+index*252, y+height+8, 240, 34,
+                                       x+8+index*242 if victory else x+index*252,
+                                       y+height+8, 234 if victory else 240, 34,
                                        label, disabled=self.session_running or error))
         return rows
 
@@ -185,7 +203,7 @@ class RogueResultUI:
         cards = self._cards(selected)
         minutes = selected['time_minutes']
         if selected['mode'] == 2:
-            event_conditions = f"{selected['laps']} {'lap' if selected['laps'] == 1 else 'laps'} / {selected['opponents']} opponents / AI {selected['ai']}%"
+            event_conditions = f"{selected['laps']} {'lap' if selected['laps'] == 1 else 'laps'} / {selected['opponents']} opponents / AI {selected['ai']}% / Aggression {selected.get('ai_aggression', 0)}%"
             result = ('P'+str(outcome['position']) if outcome.get('position') is not None else 'Position unconfirmed') + f" / Target P{outcome['target_position']} or better"
         else:
             event_conditions = content.MODES[selected['mode']][0]+' / Solo'
@@ -206,7 +224,8 @@ class RogueResultUI:
         values = [('Car / Circuit', cards[0]['label']+' / '+cards[1]['label']),
                   ('Race conditions' if selected['mode'] == 2 else 'Event conditions', f"{event_conditions} / {minutes//60:02}:{minutes%60:02} / {selected['weather'].replace('_', ' ').title()}"),
                   ('Result', diagnostic+result+' / '+data['reason']),
-                  ('Run progress', f"{outcome['wins']} wins / Perfect streak {outcome['streak']} / Spare lives {outcome['lives']}"),
+                  ('Run progress', rogue_difficulty.label(data.get('difficulty', 'normal'))+
+                   f" / {outcome['wins']} wins / Perfect streak {outcome['streak']} / Spare lives {outcome['lives']}"),
                   *mastery, ('Run summary', note)]
         return [self._item('rogue-result-detail:'+str(index), 'info', 268, 164+index*69, 940, 60,
                            label, value=value, value_scale=1.65, value_lines=1,
@@ -219,15 +238,15 @@ class RogueResultUI:
             return
         if data['tone'] == 'victory' or data.get('advance'):
             if (self.rogue_run or {}).get('challenge'):
-                self.rogue_result = None
+                self.dismiss_rogue_result()
                 self.focus_id = 'start'
             elif self.generate_rogue_challenge():
-                self.rogue_result = None
+                self.dismiss_rogue_result()
         elif data['tone'] == 'over':
-            self.rogue_result = None
+            self.dismiss_rogue_result()
             self.new_rogue_run(data['mode'])
         else:
-            self.rogue_result = None
+            self.dismiss_rogue_result()
             self.message = ('Same challenge. Your progress is saved. Press Start race when ready.'
                             if data['selection']['mode'] == 2 else
                             'Same challenge. Your progress is saved. Press Start when ready.')
@@ -243,7 +262,7 @@ class RogueResultUI:
             self._open('rogue-result-details', 'Race result details')
             return True
         if identity == 'rogue-result-back':
-            self.rogue_result = None
+            self.dismiss_rogue_result()
             self.focus_id = 'start' if not self.rogue_block() else 'rogue-next' if self.rogue_run and self.rogue_run['status'] == 'active' else 'rogue-new-local'
             return True
         if identity == 'rogue-last-result' and self.rogue_last_result is not None:

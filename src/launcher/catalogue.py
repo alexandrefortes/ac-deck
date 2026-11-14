@@ -34,11 +34,19 @@ TRACK_LAYOUTS = {
     'ks_silverstone': 'gp international national',
     'ks_vallelunga': 'classic_circuit club_circuit extended_circuit',
 }
+_DRIFT_LAYOUTS = frozenset({('drift', ''), ('ks_highlands', 'layout_drift')})
 ORIGINS = {'all': 'All origins', 'kunos': 'Kunos IDs',
            'mod': 'Mods / other IDs', 'unknown': 'Unknown origin'}
 DRIVES = {'FWD': 'FWD · Front wheels', 'RWD': 'RWD · Rear wheels',
           'AWD': 'AWD · All wheels', 'AWD2': 'AWD · All wheels',
           '4WD': '4WD · Four wheels'}
+
+
+def dedicated_drift_layout(track, layout, info):
+    """Classify dedicated layouts by identity or declared use."""
+    run = info.get('run')
+    return ((track.casefold(), layout.casefold()) in _DRIFT_LAYOUTS
+            or isinstance(run, str) and run.strip().casefold() == 'drift')
 
 
 def text(value, limit=90):

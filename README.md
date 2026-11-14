@@ -2,20 +2,25 @@
 
 A controller-friendly launcher for the original Assetto Corsa on Steam Deck.
 
-**Experimental preview v0.1.0-preview.2:** automated source/package/installation
+**Experimental preview v0.1.0-preview.3:** automated source/package/installation
 checks passed. Physical Steam Deck installation, controls, real races and
 performance have not been validated. Report your SteamOS/Proton versions and
 the observed result; do not treat the preview as a supported release.
 
+The main branch includes the source update based on Deck build 117. See the
+[community build record](docs/build-validation.md#community-candidate-from-deck-build-117)
+for changes and validation.
+
 ## Install on Steam Deck
 
-Update SteamOS and its system certificates through the normal system updater.
+Update SteamOS to 3.9.5 or newer on the Stable channel and use its updated
+default certificate store.
 Install the original **Assetto Corsa** through Steam and keep your working
 Proton configuration. Then switch to **Desktop Mode**, open **Konsole**, and
 paste this command:
 
 ```sh
-bash -o pipefail -c 'curl --fail --show-error --location --proto "=https" --proto-redir "=https" https://raw.githubusercontent.com/alexandrefortes/ac-deck/v0.1.0-preview.2/install.sh | bash'
+bash -o pipefail -c 'curl --fail --show-error --location --proto "=https" --proto-redir "=https" https://raw.githubusercontent.com/alexandrefortes/ac-deck/v0.1.0-preview.3/install.sh | bash'
 ```
 
 No GitHub login, Git checkout, SDK, compilation or manual file copying is needed.
@@ -36,7 +41,7 @@ for requirements, setup behavior and recovery.
 ## What it does
 
 - Browse installed cars and tracks and configure races in Drive.
-- Use installed Events, generate races with Event Synthetizer, and play Rogue.
+- Use installed Events, generate races with Race Synthetizer, and play Rogue.
 - Keep History, preferences, favorites and progression.
 - Configure graphics, assists, controller settings and optional integrations.
 
@@ -65,7 +70,7 @@ retain their own licenses; this disclaimer does not replace those terms.
 Preview 1 was withdrawn for dependency security corrections. This version uses
 Pillow 13.0.0 and setuptools 84.1.0; see the [security review](docs/security-review.md).
 
-- [Preview, checksums and corresponding dependency sources](https://github.com/alexandrefortes/ac-deck/releases/tag/v0.1.0-preview.2)
+- [Preview, checksums and corresponding dependency sources](https://github.com/alexandrefortes/ac-deck/releases/tag/v0.1.0-preview.3)
 - [Installation](docs/installation.md), [updates and recovery](docs/update-and-recovery.md)
 - [Troubleshooting](docs/troubleshooting.md), [report a problem](https://github.com/alexandrefortes/ac-deck/issues)
 - [Contributing and source checks](CONTRIBUTING.md), [release checks](docs/community-release-checklist.md)

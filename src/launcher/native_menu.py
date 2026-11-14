@@ -20,13 +20,14 @@ from .rogue_ui import RogueUI
 from . import campaigns
 
 
-VIEWS = ('drive', 'events', 'synth', 'rogue', 'history', 'settings')
-LABELS = ('Drive', 'Events', 'Event Synthetizer', 'Rogue', 'History', 'Settings')
+VIEWS = ('rogue', 'drive', 'events', 'synth', 'history', 'settings')
+LABELS = ('Rogue', 'Drive', 'Events', 'Race Synthetizer', 'History', 'Settings')
 
 
 class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu):
     def __init__(self, *args, **kwargs):
         campaign_cfg = kwargs.pop('campaign_cfg', None)
+        self.rogue_victory_music = kwargs.pop('rogue_victory_music', None)
         kwargs.setdefault('catalog_cache',True)
         super().__init__(*args, **kwargs)
         self.init_ai_settings()
@@ -38,6 +39,7 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
         self.overlay_title = ''
         self.focus_id = 'car'
         self.source = 'manual'
+        self.replay_selection = None
         self.installed_selection = None
         self.category = 'graphics'
         self.query = ''
@@ -133,6 +135,7 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
 
     def select_source(self, source):
         self.source = source
+        if source != 'replay':self.replay_selection = None
         self._remember_source()
 
     def refresh_history(self):
@@ -157,6 +160,8 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
             chosen = dict(self.synthesis['selection'])
         elif self.source == 'installed' and self.installed_selection is not None:
             chosen = dict(self.installed_selection)
+        elif self.source == 'replay' and self.replay_selection is not None:
+            chosen = dict(self.replay_selection)
         elif chosen is None:
             chosen = dict(self.selection)
         chosen=session_settings.restore(chosen,self.selection)
@@ -176,9 +181,9 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
         if self.event_result_visible():
             return ('EVENT / SESSION RESULT', '', self.message)
         return {
-            'drive': ('MANUAL SETUP', 'Your next drive.', self.message),
+            'drive': ('RECORDED SETUP' if self.source=='replay' else 'MANUAL SETUP', 'Your next drive.', self.message),
             'events': ('INSTALLED CAMPAIGNS', 'Choose your event.', self.message),
-            'synth': ('EVENT SYNTHETIZER', '' if self.synthesis else 'Find your next drive.', self.message),
+            'synth': ('RACE SYNTHETIZER', '' if self.synthesis else 'Find your next drive.', self.message),
             'rogue': ('ROGUE / RACE RESULT' if self.rogue_result_visible() else 'ROGUE / NEXT CHALLENGE',
                       '' if self.rogue_result_visible() or self.rogue_run else 'One more race.', self.message),
             'history': ('LOCAL HISTORY', 'Every drive has a story.', self.message),
@@ -254,8 +259,11 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
     def _binding(self, tab, index, x, y, width=234, height=76):
         identity=f'edit:{tab}:{index}'
         manual=self.selection
+        replay=(tab==3 and index in (0,1,2,3,4,5,6,8) and self.source=='replay')
         if tab==3 and index in (0,1,2,3,4,5,6,8) and self.source=='installed' and self.installed_selection is not None:
             self.selection=self.installed_selection
+        elif replay:
+            self.selection=self.replay_selection
         try:
             source=self.editing['menu'] if self.editing and self.editing['id']==identity else self
             name = source.rows(tab)[index]['name']
@@ -263,7 +271,7 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
             self.selection=manual
         label, separator, value = name.partition(' : ')
         return self._item(identity,'field',x,y,width,height,label,
-                          value=value if separator else '', binding=(tab,index),editable=True)
+                          value=value if separator else '', binding=(tab,index),editable=not replay,disabled=replay)
 
     def _event_binding(self, index, x, y, width=234, height=76):
         source=self.editing['menu'] if self.editing and self.editing['id']==f'event:{index}' else self
@@ -347,8 +355,8 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
         if self.view == 'drive':
             chosen = self.effective_selection()
             rows += self._cards(chosen)
-            indices = [0,5,4,3] if content.MODES[self.selection['mode']][1]==3 else [0,6,8,2]
-            if self.selection['mode'] != 0 and content.MODES[self.selection['mode']][1] != 3:
+            indices = [0,5,4,3] if content.MODES[chosen['mode']][1]==3 else [0,6,8,2]
+            if chosen['mode'] != 0 and content.MODES[chosen['mode']][1] != 3:
                 indices=[0,1,8,2]
             rows += [self._binding(3,index,248+column*250,546,250) for column,index in enumerate(indices)]
             when = chosen.get('time_minutes')
@@ -908,6 +916,15 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
                 ('AI level',str(selected.get('ai','-'))),('Time / weather',(selected.get('event_time_label','From session') if when is None else f'{when//60:02}:{when%60:02}')+' / '+selected.get('weather','')),
                 ('Graphics profile',graphics.LABELS.get(selected.get('graphics_profile'),'')),
                 ('Resolution',' x '.join(map(str,selected.get('resolution',[])))),('FPS and frametime','On' if selected.get('hud') else 'Off'),('Track condition','Optimum')]
+        if self.source=='rogue' and self.overlay!='history-detail':
+            difficulty=self.rogue_race_settings_label(selected).split(' / ',1)[0]
+            if selected.get('mode')==2:
+                values[4]=('AI level / aggression',f"{selected['ai']}% / {selected.get('ai_aggression',0)}%")
+                values.append(('Rogue difficulty',difficulty))
+            else:
+                values[4]=('Rogue difficulty',difficulty)
+        elif 'ai_aggression' in selected:
+            values[4]=('AI level / aggression',f"{selected.get('ai','-')}% / {selected['ai_aggression']}%")
         rows=[self._item('detail:'+str(index),'setting',268+(index%2)*480,174+(index//2)*76,454,64,label,value=str(value),disabled=True)
               for index,(label,value) in enumerate(values)]
         if self.history_record and self.overlay=='history-detail':
@@ -915,6 +932,8 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
         return rows
 
     def _navigate(self, view):
+        if view!='rogue' and self.rogue_result_visible() and self.rogue_victory_music is not None:
+            self.rogue_victory_music.stop()
         self.cancel_session_audio();self.session_request['editing']=False
         self.message=''
         self.search_edit_id=None
@@ -965,6 +984,9 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
             return
         if self.source=='installed' and self.view!='synth':
             self._open('details','Event rules')
+            return
+        if self.source=='replay':
+            self._open('details','Recorded setup')
             return
         self.picker_kind=kind
         self.picker_pin=self.view=='synth' or self.source=='generated'
@@ -1291,18 +1313,30 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
         record=self.history_record
         if not record:return
         selected=session_settings.restore(record['selection'],self.selection)
+        replay='ai_aggression' in selected
+        if replay:
+            content.integer(selected.get('ai'),50,100,'AI level')
+            content.integer(selected['ai_aggression'],0,100,'AI aggression')
         if not any(car['id']==selected.get('car') and selected.get('skin') in car['skins'] for car in self.catalog['cars']):
             raise ValueError('The recorded car or livery is not installed.')
         track=next((track for track in self.catalog['tracks'] if (track['id'],track['layout'])==(selected.get('track'),selected.get('layout',''))),None)
         if track is None:raise ValueError('The recorded circuit/layout is not installed.')
         if selected.get('event') and not any(row['id']==selected['event'] and row.get('available',True) for row in self.catalog['events']):
             raise ValueError('The recorded installed event is no longer available.')
-        normalized=Menu(self.catalog,selected,csp=self.csp,game=self.game,
+        normalized=Menu(self.catalog,dict(selected,ai=self.selection['ai']) if replay else selected,csp=self.csp,game=self.game,
                         catalog_cache=self.catalog_cache,pp_filter_cache=self.pp_filters)
-        selected=normalized.selection
+        selected=session_settings.restore(selected,normalized.selection) if replay else normalized.selection
         if not selected.get('event') and content.MODES[selected['mode']][1]==3:
             content.integer(selected['opponents'],0,min(47,track['pitboxes']-1),'Opponents')
             if selected['opponents'] and not track['ai']:raise ValueError('This circuit has no AI lane.')
+        if replay:
+            self._close_overlay()
+            self._navigate('drive')
+            self.replay_selection=selected
+            self.select_source('replay')
+            self.focus_id='start'
+            self.message='Recorded setup restored. Starting remains a separate action.'
+            return
         proposal=deepcopy(record.get('proposal'))
         if proposal:
             event_synthetizer.validate(self.game,proposal,**self.event_catalog_args())
@@ -1355,7 +1389,7 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
             if self.view=='synth':self.source='generated'
             else:
                 adjustments=self.message if self.message.startswith('AI with local adjustments:') else ''
-                self.message='AI event ready in Event Synthetizer.'+(' '+adjustments if adjustments else '')
+                self.message='AI race ready in Race Synthetizer.'+(' '+adjustments if adjustments else '')
             self._remember_source()
 
     def event_session_started(self, chosen):
@@ -1374,6 +1408,7 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
 
     def launch_selection(self):
         if self.source=='rogue':return self.rogue_launch_selection()
+        if self.source=='replay':return session_settings.restore(self.replay_selection,self.selection)
         if self.source=='generated':
             old=self.tab
             self.tab=6
@@ -1484,9 +1519,13 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
             pages=max(1,(len(self.history_rows)+4)//5)
             self.history_page=(self.history_page+(-1 if identity.endswith('prev') else 1))%pages
         elif identity in ('settings-prev','settings-next'):
-            count=len(self._setting_groups()[self.category][0][1])
+            bindings=self._setting_groups()[self.category][0][1]
             page_size=7 if self.category=='gamepad' else 6
-            self.settings_page=(getattr(self,'settings_page',0)+(-1 if identity.endswith('prev') else 1))%max(1,(count+page_size-1)//page_size)
+            pages=max(1,(len(bindings)+page_size-1)//page_size)
+            self.settings_page=(getattr(self,'settings_page',0)+(-1 if identity.endswith('prev') else 1))%pages
+            if bindings:
+                tab,position=bindings[self.settings_page*page_size]
+                self.focus_id=f'edit:{tab}:{position}'
 
     def _move_focus(self, direction):
         self.search_edit_id=None
@@ -1519,6 +1558,7 @@ class NativeMenu(RogueUI,CampaignUI,OneShotUI,SessionPromptUI,AISettingsUI,Menu)
         if self.ai_panel is not None:
             return self.ai_settings_action(action)
         if self.session_prompt_action(action):return
+        if self.rogue_settings_action(action):return
         if self.rogue_result_action(action):return
         if self.event_result_visible() and action in ('back', 'launch'):
             if action == 'back':self._activate('event-result-back')

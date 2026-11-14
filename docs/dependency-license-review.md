@@ -1,6 +1,6 @@
-# Dependency review for v0.1.0-preview.2
+# Dependency review for v0.1.0-preview.3
 
-Preview 1 was withdrawn after confirmed dependency advisories. Preview 2 uses
+Preview 1 was withdrawn after confirmed dependency advisories. Preview 3 retains the reviewed preview 2 dependency bytes with
 Pillow 13.0.0 and setuptools 84.1.0; see the [security decision](security-review.md)
 and the [preserved preview 1 review](../archive/dependency-license-review-v0.1.0-preview.1.md).
 
@@ -13,17 +13,17 @@ Physical Steam Deck installation and performance remain untested.
 
 ## Exact distribution
 
-The [preview release](https://github.com/alexandrefortes/ac-deck/releases/tag/v0.1.0-preview.2)
+The [preview release](https://github.com/alexandrefortes/ac-deck/releases/tag/v0.1.0-preview.3)
 provides the runtime, bootstrap, checksums and corresponding dependency-source
 companion. The source tag and release record identify matching application
 sources. Use this exact set together:
 
 | Material | Identity |
 | --- | --- |
-| Runtime archive | 46218949 bytes; SHA-256 `72c1124a647fad0f7d03a1612aac6d9bda5deebd0e172ad9a6e541c1e851d28f` |
-| Executable | SHA-256 `6dfa64afe517b77adbe5c75ef8e04d907b42beb611535fef38570ae576a2e281` |
-| Dependency-source companion | 389623637 bytes; SHA-256 `89bebd9e5ec368b4cd5f482a83c9ad5b5720029aef3bbd4bfeaf6f95860515a0` |
-| [Dependency inventory](../licenses/dependency-sources.json) | SHA-256 `cd3a95e54ba6fc9be5716f8ced932490e55e964a6f1df1e96ef521971931909a`; 69 component records and 278 source/notice/recipe files |
+| Runtime archive | 46291488 bytes; SHA-256 `813fba0308aee063318ef5e3c87d9323a170e3464ba39b8aa32aefb788aff9d2` |
+| Executable | SHA-256 `2f8494fdc70c2bb5f2dcad8865ebffb54df74c1bc7ddc12801bc62ba470e55ed` |
+| Dependency-source companion | 389623756 bytes; SHA-256 `786a625cb49bcc50074589bd4ab39ba8f472b466682b6a336b1f7a71dc8ececd` |
+| [Dependency inventory](../licenses/dependency-sources.json) | SHA-256 `e3f077bf1015f5d528db42e15943b9385f70143e16ed1770a59ca74aca9c28ee`; 69 component records and 278 source/notice/recipe files |
 | Runtime ELF inventory | 135 files, mapped to this candidate in the dependency inventory |
 | Selected dependency notices | 103 original files, copied into runtime `licenses/sdk/` |
 
@@ -56,7 +56,7 @@ auditwheel rewrite were not reproduced. The full Pillow 13 notice adds the
 Tcl/Tk header terms. Original AOM and LibYuv patent grants are supplied as
 separate source-bound notices. Setuptools 84.1.0 is a build input; its MIT project license
 does not replace bundled vendors' LGPL, Apache, MPL or other terms. The full
-sdist and original vendor notices are retained. The actual V2 PYZ, base-library
+sdist and original vendor notices are retained. The preview 3 PYZ, base-library
 ZIP and external code contain no setuptools or checked vendor modules; that
 build-only classification applies to this candidate. Hashes identify selected bytes, not signature verification
 or byte-identical rebuilding on every host.
@@ -84,7 +84,7 @@ remain intact. Corresponding sources and notices are available from the same
 release as the runtime, without private repository access or a paid account.
 Project-owned PolyForm terms do not supersede those component rights.
 
-A disposable copy of this V2 candidate accepted the Ubuntu ALSA 1.2.11
+A disposable copy of the preview 3 candidate accepted the Ubuntu ALSA 1.2.11
 library in place of its supplied 1.2.14 library. Informational CLI,
 `SDL_Init(0)`/`SDL_Quit`, reported version and `/proc` mapped-file hash all
 confirmed the replacement. Only that library changed in the copy; the entire
@@ -97,7 +97,7 @@ proves that replacement mechanism, not every ABI or hardware path.
 The [content review](content-rights.md) retains three English quotations under
 its specific US/Brazil public-domain assessment. Current public PNG gallery
 payloads are omitted; historical records and local copies were preserved.
-Game/DLC data, CSP, optional camera archives and private album/Toasty image/audio
+Game/DLC data, CSP, optional camera archives, private album and Toasty media, and the victory tracks
 are excluded. Missing optional media does not remove Rogue progression or
 make optional mods prerequisites. See [integrations](third-party-integrations.md).
 

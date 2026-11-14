@@ -2,7 +2,7 @@
 from pathlib import Path
 import sys
 
-from . import rogue_rewards
+from . import rogue, rogue_rewards
 
 
 PAGE_SIZE = 6
@@ -26,9 +26,34 @@ class RogueRewardsUI:
                 and not self.session_running and self.rogue_pending is None)
 
     def rogue_album_entries(self):
-        profile = self.rogue_state.get('profile', {})
+        profile = rogue.album_profile(self.rogue_state.get('profile', {}))
         return rogue_rewards.album_entries(profile, owned=profile.get('stickers', ()),
                                             badges=profile.get('badges', ()))
+
+    def rogue_latest_achievement_items(self, available):
+        profile = self.rogue_state.get('profile', {})
+        identity = profile.get('last_achievement')
+        if identity is None:
+            for outcome in reversed(profile.get('processed_sessions', {}).values()):
+                rewards = outcome.get('new_stickers') or outcome.get('new_badges')
+                if rewards:
+                    identity = rewards[-1]
+                    break
+        earned = [entry for entry in self.rogue_album_entries() if entry['unlocked']]
+        latest = next((entry for entry in earned if entry['id'] == identity), None)
+        entry = latest or next(reversed(earned), None)
+        heading = 'Latest achievement' if latest or not entry else 'Unlocked achievement'
+        return [self._item('rogue-latest-art', 'rogue-sticker', 862, 150, 92, 122, '',
+                           image=self.rogue_album_image(entry) if entry else None,
+                           earned=bool(entry), secret=entry['secret'] if entry else False,
+                           art_only=True, disabled=True),
+                self._item('rogue-latest-heading', 'text', 966, 152, 280, 21, heading, disabled=True),
+                self._item('rogue-latest-title', 'text', 966, 173, 280, 70,
+                           entry['name'] if entry else 'No achievements yet',
+                           value=entry['description'] if entry else 'Win challenges to discover rewards.',
+                           scale=1.7, disabled=True),
+                self._item('rogue-album', 'button', 966, 242, 282, 34,
+                           'View all achievements', selected=True, disabled=not available)]
 
     def rogue_album_image(self, entry):
         # Unknown badges never resolve an identity, image or hidden condition.
@@ -47,7 +72,6 @@ class RogueRewardsUI:
         self.refresh_rogue(announce=False)
         self.rogue_album_page = 0
         self.rogue_album_detail = None
-        self._rogue_album_images.clear()
         self._open('rogue-album', 'Achievements')
         if self.rogue_album_entries():
             self.focus_id = 'rogue-reward:0'

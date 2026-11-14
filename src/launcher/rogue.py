@@ -11,7 +11,7 @@ import threading
 import uuid
 
 from . import file_io as safe
-from . import content, results, rogue_rewards, session_settings
+from . import content, results, rogue_difficulty, rogue_rewards, session_settings
 
 
 FILE_LIMIT = 8 * 1024 * 1024
@@ -63,14 +63,29 @@ def _selection(value):
         raise ValueError('Rogue requires a standalone race.')
     _integer(value.get('opponents'), 1 if mode == 2 else 0, 47 if mode == 2 else 0)
     _integer(value.get('laps'), 1, 99)
-    _integer(value.get('ai'), 70, 100)
+    _integer(value.get('ai'), rogue_difficulty.MIN_AI, rogue_difficulty.MAX_AI)
+    if 'ai_aggression' in value:
+        _integer(value['ai_aggression'], 0, 100)
     _integer(value.get('time_minutes'), 480, 960)
     return value
 
 
-def _objective(value, selection):
+def _race_goal(value, grid, *, legacy=False, require_rules=False):
+    limit = grid if legacy else min(grid, rogue_difficulty.MAX_RACE_TARGET)
+    target = _integer(value.get('target_position'), 1, limit)
+    if require_rules or 'target_range' in value:
+        bounds = value.get('target_range')
+        if (not isinstance(bounds, list) or len(bounds) != 2
+                or any(type(bound) is not int for bound in bounds)
+                or not 1 <= bounds[0] <= target <= bounds[1] <= limit):
+            raise ValueError('Invalid Rogue target range.')
+    if (require_rules or 'rules' in value) and value.get('rules') != {'finish_position': target}:
+        raise ValueError('Invalid Rogue challenge rules.')
+
+
+def _objective(value, selection, *, legacy_race=False):
     if selection['mode'] == 2:
-        _integer(value.get('target_position'), 1, selection['opponents'] + 1)
+        _race_goal(value, selection['opponents'] + 1, legacy=legacy_race)
         return
     objective = value.get('objective')
     kind = 'time' if selection['mode'] == 1 else 'points'
@@ -99,7 +114,11 @@ def objective_label(challenge):
     return f"{name} / {format_value(objective['kind'], objective['target'])} {comparison}"
 
 
-def _challenge(value, stage=None):
+def race_brief(challenge):
+    return f"{objective_label(challenge)}. {challenge['selection']['laps']} laps. Car and circuit are locked."
+
+
+def _challenge(value, stage=None, *, legacy_race=False):
     if not isinstance(value, dict):
         raise ValueError('Invalid Rogue challenge.')
     _identity(value.get('challenge_id'))
@@ -107,7 +126,7 @@ def _challenge(value, stage=None):
     if stage is not None and value['stage'] != stage:
         raise ValueError('Rogue challenge belongs to another stage.')
     selection = _selection(value.get('selection'))
-    _objective(value, selection)
+    _objective(value, selection, legacy_race=legacy_race)
     if not isinstance(value.get('base'), dict):
         raise ValueError('Rogue challenge base is missing.')
     if value.get('generator') not in ('deterministic', 'ai'):
@@ -124,20 +143,32 @@ def _sticker_outcome(value):
         rogue_rewards.validate_sticker_ids(value['new_stickers'])
 
 
-def clean(value=None):
-    if value is None:
-        return dict(schema_version=1, profile=dict(car_xp={}, track_xp={}, track_wins={}, badges=[], stickers=[], best_wins=0,
-                    processed_sessions={}), run=None)
-    if not isinstance(value, dict) or type(value.get('schema_version')) is not int or value['schema_version'] != 1:
-        raise ValueError('Unsupported Rogue progress file. Original file kept.')
-    if set(value) != {'schema_version', 'profile', 'run'}:
-        raise ValueError('Invalid Rogue progress file. Original file kept.')
-    value = deepcopy(value)
-    profile = value['profile']
-    if not isinstance(profile, dict):
-        raise ValueError('Invalid Rogue profile.')
+def _empty_progress():
+    return dict(car_xp={}, track_xp={}, track_wins={}, best_wins=0)
+
+
+def progress_profile(profile, difficulty='normal'):
+    """Estatísticas esportivas exclusivas da dificuldade escolhida."""
+    rogue_difficulty.preset(difficulty)
+    return profile if difficulty == 'normal' else profile.get('easy_progress', _empty_progress())
+
+
+def album_profile(profile):
+    """Soma somente os eixos de XP para a coleção cosmética compartilhada."""
+    combined = dict(badges=list(profile.get('badges', [])), stickers=list(profile.get('stickers', [])))
+    easy = progress_profile(profile, 'easy')
+    for key in ('car_xp', 'track_xp'):
+        combined[key] = dict(profile.get(key, {}))
+        for identity, amount in easy[key].items():
+            combined[key][identity] = combined[key].get(identity, 0) + amount
+    return combined
+
+
+def _progress(value):
+    if not isinstance(value, dict):
+        raise ValueError('Invalid Rogue progress.')
     for key in ('car_xp', 'track_xp', 'track_wins'):
-        mapping = profile.get(key)
+        mapping = value.get(key)
         if not isinstance(mapping, dict):
             raise ValueError('Invalid Rogue XP.')
         for identity, amount in mapping.items():
@@ -150,7 +181,26 @@ def clean(value=None):
                 _identity(track)
                 content.layout_identifier(layout, empty=True)
             _integer(amount)
-    _integer(profile.get('best_wins'))
+    _integer(value.get('best_wins'))
+
+
+def clean(value=None):
+    if value is None:
+        return dict(schema_version=1, profile=dict(car_xp={}, track_xp={}, track_wins={}, badges=[], stickers=[], best_wins=0,
+                    processed_sessions={}, settings=rogue_difficulty.clean_settings(),
+                    easy_progress=_empty_progress()), run=None)
+    if not isinstance(value, dict) or type(value.get('schema_version')) is not int or value['schema_version'] != 1:
+        raise ValueError('Unsupported Rogue progress file. Original file kept.')
+    if set(value) != {'schema_version', 'profile', 'run'}:
+        raise ValueError('Invalid Rogue progress file. Original file kept.')
+    value = deepcopy(value)
+    profile = value['profile']
+    if not isinstance(profile, dict):
+        raise ValueError('Invalid Rogue profile.')
+    _progress(profile)
+    profile['easy_progress'] = profile.get('easy_progress', _empty_progress())
+    _progress(profile['easy_progress'])
+    profile['settings'] = rogue_difficulty.clean_settings(profile.get('settings'))
     if (not isinstance(profile.get('badges'), list)
             or any(not isinstance(identity, str) for identity in profile['badges'])
             or len(set(profile['badges'])) != len(profile['badges'])
@@ -182,14 +232,25 @@ def clean(value=None):
             raise ValueError('Invalid Rogue run mode or status.')
         if not isinstance(run.get('base'), dict):
             raise ValueError('Invalid Rogue base.')
+        settings = rogue_difficulty.run_settings(run)
         for key in ('wins', 'streak'):
             _integer(run.get(key))
         stage(run)
         if run['streak'] > run['wins']:
             raise ValueError('Invalid Rogue streak.')
         _integer(run.get('lives'), 0, MAX_LIVES)
-        if run.get('challenge') is not None:
-            _challenge(run['challenge'], stage(run))
+        challenge = run.get('challenge')
+        if challenge is not None:
+            _challenge(challenge, stage(run), legacy_race=True)
+            if run['status'] == 'active' and challenge['selection']['mode'] == 2:
+                cap = rogue_difficulty.MAX_RACE_TARGET
+                if 'target_range' in challenge:
+                    challenge['target_range'] = [min(bound, cap) for bound in challenge['target_range']]
+                if challenge['target_position'] > cap:
+                    challenge['target_position'] = cap
+                    if 'rules' in challenge:
+                        challenge['rules']['finish_position'] = cap
+                    challenge['brief'] = race_brief(challenge)
         if not isinstance(run.get('attempts'), dict) or not isinstance(run.get('history'), list):
             raise ValueError('Invalid Rogue attempt history.')
         for row in run['history']:
@@ -221,8 +282,11 @@ def clean(value=None):
                 raise ValueError('Invalid Rogue attempt.')
             _identity(attempt.get('session_id'))
             _identity(attempt.get('challenge_id'))
+            if attempt.get('difficulty', settings['difficulty']) != settings['difficulty']:
+                raise ValueError('Rogue attempt difficulty differs from the run.')
             _selection(attempt.get('selection'))
-            _objective(attempt, attempt['selection'])
+            # A tentativa lançada mantém o objetivo usado durante a corrida.
+            _objective(attempt, attempt['selection'], legacy_race=True)
             _sticker_outcome(attempt.get('outcome'))
         pending = run.get('pending_attempt')
         if pending is not None and (not isinstance(pending, str) or pending not in run['attempts']
@@ -489,6 +553,7 @@ def _active(state):
 def _summary(run, status, *, attempt=None, position=None, value=None, xp=0, badges=(), stickers=(), reason=''):
     summary = dict(status=status, attempt_id=attempt['id'] if attempt else None,
                 challenge_id=attempt['challenge_id'] if attempt else None,
+                difficulty=rogue_difficulty.run_settings(run)['difficulty'],
                 position=position, target_position=attempt.get('target_position') if attempt else None,
                 xp_awarded=xp, lives=run['lives'], streak=run['streak'], wins=run['wins'],
                 new_badges=list(badges), new_stickers=list(stickers), reason=reason,
@@ -585,6 +650,9 @@ class Store:
         self.state = load(self.path)
         return deepcopy(self.state)
 
+    def settings(self):
+        return deepcopy(self.state['profile']['settings'])
+
     def _change(self, callback):
         with _locked(self.path):
             state = load(self.path)
@@ -596,6 +664,21 @@ class Store:
             self.state = state
             return deepcopy(result)
 
+    def set_settings(self, value):
+        settings = rogue_difficulty.clean_settings(value)
+        def change(state):
+            run = state['run']
+            if run is not None and run['status'] == 'active':
+                if run['pending_attempt'] is not None:
+                    raise ValueError('Finish the current Rogue attempt before changing settings.')
+                if settings['difficulty'] != rogue_difficulty.run_settings(run)['difficulty']:
+                    raise ValueError('Reset the current Rogue run before changing difficulty.')
+                run['settings'] = deepcopy(settings)
+                run['base'].update(ai=settings['ai'], ai_aggression=settings['aggression'])
+            state['profile']['settings'] = deepcopy(settings)
+            return settings
+        return self._change(change)
+
     def start_run(self, base, mode='deterministic', seed=None):
         if not isinstance(base, dict) or mode not in ('deterministic', 'ai'):
             raise ValueError('Invalid Rogue run settings.')
@@ -603,8 +686,12 @@ class Store:
         def change(state):
             if state['run'] is not None and state['run']['status'] == 'active':
                 raise ValueError('Reset the current Rogue run before starting another.')
-            state['run'] = dict(id=uuid.uuid4().hex, seed=seed, mode=mode, base=deepcopy(base),
-                                wins=0, streak=0, lives=1, status='active', challenge=None,
+            settings = state['profile']['settings']
+            run_base = dict(deepcopy(base), ai=settings['ai'], ai_aggression=settings['aggression'])
+            state['run'] = dict(id=uuid.uuid4().hex, seed=seed, mode=mode, base=run_base,
+                                difficulty=settings['difficulty'], settings=deepcopy(settings),
+                                wins=0, streak=0, lives=rogue_difficulty.initial_lives(settings['difficulty']),
+                                status='active', challenge=None,
                                 attempts={}, pending_attempt=None, rewarded_badges=[], history=[],
                                 last_challenge=None, last_outcome=None, created_utc=_now())
             return state['run']
@@ -705,6 +792,7 @@ class Store:
                 state['profile']['processed_sessions'][previous['session_id']] = previous['outcome']
             attempt = dict(id=identity, run_id=run['id'], challenge_id=challenge['challenge_id'],
                            session_id=session, selection=deepcopy(challenge['selection']),
+                           difficulty=rogue_difficulty.run_settings(run)['difficulty'],
                            status='pending', started_utc=_now())
             if challenge['selection']['mode'] == 2:
                 attempt['target_position'] = challenge['target_position']
@@ -736,19 +824,20 @@ class Store:
             status, value = _outcome(attempt, record)
             position = value if attempt['selection']['mode'] == 2 else None
             profile, xp, new_badges = state['profile'], 0, []
+            progress = progress_profile(profile, rogue_difficulty.run_settings(run)['difficulty'])
             if status in ('won', 'lost'):
                 target_xp = XP_PER_CHALLENGE if status == 'won' else PARTIAL_XP if value is not None else 0
                 xp = max(0, target_xp - run.get('challenge_xp', 0))
                 run['challenge_xp'] = max(run.get('challenge_xp', 0), target_xp)
                 selection = attempt['selection']
                 for key, identity in (('car_xp', selection['car']), ('track_xp', _track_key(selection))):
-                    profile[key][identity] = profile[key].get(identity, 0) + xp
+                    progress[key][identity] = progress[key].get(identity, 0) + xp
                 if status == 'won':
                     run['wins'] += 1
                     run['streak'] += 1
-                    profile['best_wins'] = max(profile['best_wins'], run['wins'])
+                    progress['best_wins'] = max(progress['best_wins'], run['wins'])
                     identity = _track_key(selection)
-                    profile['track_wins'][identity] = profile['track_wins'].get(identity, 0) + 1
+                    progress['track_wins'][identity] = progress['track_wins'].get(identity, 0) + 1
                     for identity, threshold, _, _ in _BADGES:
                         if run['streak'] >= threshold and identity not in run['rewarded_badges']:
                             run['rewarded_badges'].append(identity)
@@ -776,8 +865,10 @@ class Store:
                 if selection['mode'] != 2:
                     run['history'][-1].update(mode=selection['mode'], objective=deepcopy(attempt['objective']), value=value)
                 run['history'] = run['history'][-100:]
-            new_stickers = rogue_rewards.newly_unlocked(profile, owned=profile['stickers'])
+            new_stickers = rogue_rewards.newly_unlocked(album_profile(profile), owned=profile['stickers'])
             profile['stickers'].extend(new_stickers)
+            if new_badges or new_stickers:
+                profile['last_achievement'] = (new_stickers or new_badges)[-1]
             outcome = _summary(run, status, attempt=attempt, position=position, value=value, xp=xp,
                                badges=new_badges, stickers=new_stickers, reason=_outcome_reason(status, record))
             outcome['stage'] = challenge['stage']

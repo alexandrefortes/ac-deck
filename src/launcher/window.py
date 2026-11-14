@@ -24,6 +24,7 @@ from .content import MODES, pp_filters
 from .graphics import LABELS as GRAPHICS_LABELS
 from . import controls, previews, conditions, comfort, graphics, chase_camera, gamepad_fx, event_synthetizer, ai_events, api_credentials
 from .csp import VERSION as CSP_VERSION
+from .settings_help import SettingsHelp, route as settings_route
 from . import driving_haptics, session_process, ai_preferences, ai_usage, ai_report, proximity_alert
 
 # Sete linhas de cinco bits por caractere; escala inteira na textura.
@@ -110,6 +111,7 @@ class Window:
         self.window = self.renderer = None
         self.controllers, self.textures, self.images, self.fonts = [], {}, OrderedDict(), {}
         self._rumble_controller = None
+        self.settings_help = SettingsHelp()
         self._bind()
         # The native Deck HIDAPI driver disables trackpad mouse emulation even
         # during enumeration. Leave that device to Steam Input; this SDL hint
@@ -384,6 +386,10 @@ class Window:
                                    sdl_timestamp_ms=struct.unpack_from('=I',raw,4)[0])
             elif event.type in (0x653,0x654):
                 self.connect()
+            elif event.type==0x400:
+                actions.append(('hover',*struct.unpack_from('=ii',raw,20)))
+            elif event.type==0x200 and raw[12]==11:  # Mouse left the window.
+                actions.append(('hover',))
             elif event.type==0x401 and raw[16]==1:
                 actions.append(('click',*struct.unpack_from('=ii',raw,20)))
             elif event.type==0x403:
@@ -513,7 +519,7 @@ class Window:
 
 
 class Menu:
-    tabs=('CARS','TRACKS','EVENTS','SESSION','GRAPHICS','SETTINGS','Event Synthetizer')
+    tabs=('CARS','TRACKS','EVENTS','SESSION','GRAPHICS','SETTINGS','Race Synthetizer')
     options=('Mode','Livery','Weather','Opponents','AI level','Laps','Minutes',
              'Automatic gearbox','Time of day','Automatic clutch')
     graphics_options=('Profile','Resolution','FPS and frametime','PP filter')
@@ -552,7 +558,7 @@ class Menu:
         self.selection.update(graphics.normalize(selection or {},csp_available=csp))
         if type(self.selection['ghost']) is not bool:
             self.selection['ghost']=True
-        if (self.selection['chase_camera'] in chase_camera.BACC
+        if (self.selection['chase_camera'] in (*chase_camera.BACC, chase_camera.SPEED)
                 and not any(key in (selection or {}) for key in chase_camera.GEOMETRY)):
             self.selection.update(chase_camera.geometry_defaults(self.selection['chase_camera']))
         if isinstance(self.selection.get('mirrors'),str) and self.selection['mirrors'] in comfort.MIRRORS:
@@ -628,7 +634,7 @@ class Menu:
             try:
                 self.api_key=api_credentials.load(self.key_path)
             except (OSError,ValueError,RuntimeError):
-                self.message='Local API key unavailable. Paste it again in Event Synthetizer.'
+                self.message='Local API key unavailable. Paste it again in Race Synthetizer.'
         if synthesis_store is not None and not event_state_unavailable:
             try:
                 proposal=event_synthetizer.load(synthesis_store)
@@ -765,6 +771,8 @@ class Menu:
                         shown='45 (GT5 fixed)'
                     elif key=='chase_fov' and self.selection['chase_camera'] in chase_camera.BACC:
                         shown='Dynamic (BACC script)'
+                    elif key=='chase_fov' and self.selection['chase_camera']==chase_camera.SPEED:
+                        shown='Dynamic (Speed Chase)'
                     rows.append(dict(name=label+' : '+shown))
                 rows.append(dict(name='Steering : '+controls.MODES[self.selection['control_mode']]))
             for key,(_,label) in controls.FIELDS.items():
@@ -824,6 +832,9 @@ class Menu:
             return
         if key=='chase_fov' and s['chase_camera']==chase_camera.GT5:
             self.message='GT5 Spec 2.0 fixes FOV at 45 degrees. Your adjustable camera FOV stays saved.'
+            return
+        if key=='chase_fov' and s['chase_camera']==chase_camera.SPEED:
+            self.message='Speed Chase widens the field of view with speed. Your adjustable camera FOV stays saved.'
             return
         if key=='stability_control':
             s[key]=max(0,min(100,s[key]+delta))
@@ -934,6 +945,8 @@ class Menu:
             elif key in chase_camera.SETTINGS:
                 self.message=('GT5 Spec 2.0: installs and repairs from the included archive. FOV is fixed at 45; Change view selects chase views.'
                               if s['chase_camera']==chase_camera.GT5 else
+                              'Speed Chase widens the field of view with speed. Use Change view to select the near or far view.'
+                              if s['chase_camera']==chase_camera.SPEED else
                               'Use CSP Performance or CSP Quality, choose CSP Adjustable or another chase camera, then start and use Change view. Original disables it.')
         else:
             low,high={'opponents':(0,min(47,self.track()['pitboxes']-1)),
@@ -1507,6 +1520,9 @@ def _run(catalog,selection,start,*,proton=None,capture=None,library_path=None,pr
         menu.message='Menu preview. To drive, launch through Steam on the Deck.'
     window=Window(proton,library_path,trace=trace)
     if hasattr(menu,'audio_sdl'):menu.audio_sdl=window.sdl
+    victory_music=getattr(menu,'rogue_victory_music',None)
+    if victory_music is not None:victory_music.bind(window.sdl)
+    help_state=getattr(window,'settings_help',None)
     trace('menu_opened')
     process=None
     menu.session_running=False
@@ -1573,6 +1589,7 @@ def _run(catalog,selection,start,*,proton=None,capture=None,library_path=None,pr
                 if on_stop is not None:on_stop()
                 actions=[]
             focused=window.focused() if hasattr(window,'focused') else True
+            if help_state is not None and not focused:help_state.clear()
             if process is not None and not focused:lost_focus=True
             restored=paused and shutdown.reason is None and (process is None or focused)
             if restored:
@@ -1632,6 +1649,12 @@ def _run(catalog,selection,start,*,proton=None,capture=None,library_path=None,pr
                     menu.message='A session is running. Close the game before exiting the launcher.'
                     trace('menu_exit_blocked',reason='session_running')
                     continue
+                if isinstance(action,tuple) and action[0]=='hover':
+                    if help_state is not None:help_state.motion(action[1:])
+                    continue
+                if help_state is not None:
+                    help_state.navigation()
+                    before=(settings_route(menu),getattr(menu,'focus_id',None),menu.key_focus)
                 if action=='paste_key' and menu.key_dialog:
                     menu.key_buffer=window.clipboard().strip()
                     continue
@@ -1639,6 +1662,8 @@ def _run(catalog,selection,start,*,proton=None,capture=None,library_path=None,pr
                     menu.action(('key_text',window.clipboard()))
                     continue
                 result=menu.action(action)
+                if help_state is not None and before!=(settings_route(menu),getattr(menu,'focus_id',None),menu.key_focus):
+                    help_state.clear()
                 if result in ('haptics_left','haptics_right') and process is None and not capture and not preview:
                     test_side=result.removeprefix('haptics_')
                     test_until=now+0.20
@@ -1708,5 +1733,6 @@ def _run(catalog,selection,start,*,proton=None,capture=None,library_path=None,pr
             window.sdl.SDL_RenderPresent(window.renderer)
             time.sleep(0.01 if fast_haptics or test_side is not None else 0.016)
     finally:
+        if victory_music is not None:victory_music.stop()
         menu.close()
         window.close()

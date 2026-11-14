@@ -1,5 +1,36 @@
 # Community candidate validation
 
+## Community candidate from Deck build 117
+
+The experimental community package `v0.1.0-preview.3` brings Speed Chase,
+Rogue difficulty and objectives, the revised victory screen, Race Synthetizer
+and help in Settings. The public installer and its pinned external CSP 0.3.1
+download are preserved. Optional victory tracks, album art, Toasty media
+and mod archives are excluded. Rogue still shows its objectives and progress
+without the optional media.
+
+The source export records the canonical build 117 source revision and the
+curated file hashes in the [public manifest](../public-source-manifest.json).
+The community version keeps the existing installer and allows saved schema 1
+race proposals to use the default AI level when that field is absent.
+
+- 216 public source tests and 139 compiled tests passed without skips.
+  Two process fixtures remain source-only. Nine informational CLI checks,
+  the bootstrap, relocation with spaces and ten offscreen compositions passed.
+- Runtime SHA-256 `813fba0308aee063318ef5e3c87d9323a170e3464ba39b8aa32aefb788aff9d2`.
+  The 135 ELF files require at most GLIBC 2.38. All 134 dependency ELFs
+  match preview 2 byte for byte. The source companion contains the 278
+  materials and the updated inventory. The ALSA replacement check passed
+  against a disposable copy of this runtime.
+- The [security review](security-review.md#preview-3-advisory-recheck) covers
+  the exact package pins and the SteamOS certificate prerequisite.
+
+Use SteamOS 3.9.5 or newer on the Stable channel with the updated system
+certificate store. Installation, controls and racing on a physical Deck
+remain unverified for this community package. The supported installation
+path starts with a fresh runtime. The packaging updater cannot migrate
+progress between preview 2 and preview 3.
+
 ## Security-corrected preview 2: 3 November 2026
 
 Version **v0.1.0-preview.2** uses the versioned community cycle with a

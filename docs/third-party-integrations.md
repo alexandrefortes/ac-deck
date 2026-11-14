@@ -42,6 +42,11 @@ claim that no third-party script is ever copied would be inaccurate.
 
 ## Media and runtime dependencies
 
+Preview 3 adds the authored Speed Chase script for CSP. Its physical behavior
+with the public installer’s CSP 0.3.1 remains untested. The community runtime
+omits the private victory tracks. The Rogue objectives and victory screen still
+work with silent celebrations.
+
 Private album pictures and Toasty image/audio are excluded. Missing album art
 falls back without losing XP, stickers or Rogue state; missing Toasty media
 disables that cosmetic effect without blocking the race. The three attributed

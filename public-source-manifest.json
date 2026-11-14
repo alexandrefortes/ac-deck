@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "source_commit": "60bf9de196a7ccc27b5019c43370c3d309c451cf",
+  "source_commit": "8289e0b634af6184a0c89ac99eb7fc30f5cfd70b",
   "source_tree": "working-tree",
   "scope": "Reviewed source files only; no Git history or private payloads",
   "first_party_license": "not managed by export; see destination LICENSE",
@@ -20,8 +20,8 @@
     {
       "path": "scripts/build_launcher_linux.py",
       "source_path": "scripts/build_launcher_linux.py",
-      "sha256": "88db1d9fa0d98b1d9f46958fac89c1371648ea1861d03dc750cdde8d007108a7",
-      "size_bytes": 32188,
+      "sha256": "537b7d4060338d1a43f0dce4b48a266a576b14ebe7fee3e59884c8912da866d4",
+      "size_bytes": 32433,
       "mode": 420
     },
     {
@@ -69,8 +69,8 @@
     {
       "path": "scripts/ciclo_entrega_lib/community_probe.py",
       "source_path": "scripts/ciclo_entrega_lib/community_probe.py",
-      "sha256": "792bf815ee7254d22605b5b739b8bba7aed3016c26736754fc8bebfc3ccec9dc",
-      "size_bytes": 12002,
+      "sha256": "db6143749a448a39151f99f2f524d5e7d4474e43276584857589feecad3a7b7c",
+      "size_bytes": 12034,
       "mode": 420
     },
     {
@@ -90,8 +90,8 @@
     {
       "path": "scripts/exportar_ac_deck.py",
       "source_path": "scripts/exportar_ac_deck.py",
-      "sha256": "2b0270296de0a7f45b7a658c429490ceea5063d5612f9a067e07c05252b8f508",
-      "size_bytes": 15272,
+      "sha256": "35f57209c396bd17ce09ab9b106267d6fe7941336d6f256322f7c18a5cf7ed85",
+      "size_bytes": 15325,
       "mode": 420
     },
     {
@@ -167,8 +167,8 @@
     {
       "path": "src/launcher/ai_events.py",
       "source_path": "src/launcher/ai_events.py",
-      "sha256": "d8908c8d7ee4d6843797e028e8a487ce97aea10d0bcef29173194658cfacc99f",
-      "size_bytes": 27589,
+      "sha256": "828d8cc6ad3bb6f38ceaf4bb9e8681b907703ddd6fe4352983c6863fee6a75ca",
+      "size_bytes": 27692,
       "mode": 420
     },
     {
@@ -216,8 +216,8 @@
     {
       "path": "src/launcher/application.py",
       "source_path": "src/launcher/application.py",
-      "sha256": "3208bbeb6fcdce414a1842a33bab90130ac66352c9bcfeec19c753b805009500",
-      "size_bytes": 35970,
+      "sha256": "c8b8dca705d2dfb22322591702b074f22389e821d29ed17bd9cfce7c7ef50b00",
+      "size_bytes": 38980,
       "mode": 420
     },
     {
@@ -251,15 +251,15 @@
     {
       "path": "src/launcher/catalogue.py",
       "source_path": "src/launcher/catalogue.py",
-      "sha256": "7fcb956b65ca4b4f0fa9cb0345bbdcee515ce6b3ee6a45fc6800ddfc1fb6a416",
-      "size_bytes": 7441,
+      "sha256": "4f400eefd8d0957b3b480251c1ee2c4876bf1bbebb52ca4facb3a8453dc83969",
+      "size_bytes": 7805,
       "mode": 420
     },
     {
       "path": "src/launcher/chase_camera.py",
       "source_path": "src/launcher/chase_camera.py",
-      "sha256": "c165247209e560b97ee24d21149c5af56d04dfa349fa9fc6a12023316d5558a4",
-      "size_bytes": 15403,
+      "sha256": "2675f56408be525e3965a5b8f6acf6e743d5e67a6587e34f6c901aa3655a099a",
+      "size_bytes": 16093,
       "mode": 420
     },
     {
@@ -293,8 +293,8 @@
     {
       "path": "src/launcher/content.py",
       "source_path": "src/launcher/content.py",
-      "sha256": "9c2608562eaa05ce8f74c983251c373dd4f5dfb5404ff7a629d93493ac9ae0a7",
-      "size_bytes": 18126,
+      "sha256": "a70a6a937a61429b4a673cf5ee0ee1b2a1cfdec415595f155d4f9182193a5b47",
+      "size_bytes": 18736,
       "mode": 420
     },
     {
@@ -349,8 +349,8 @@
     {
       "path": "src/launcher/event_synthetizer.py",
       "source_path": "src/launcher/event_synthetizer.py",
-      "sha256": "c0ce59a47dee5e3485a01f2d45cd1fe1b73f2d23dbaf2269864a374527d94d49",
-      "size_bytes": 17305,
+      "sha256": "2a5df04b3898a5e986a2a36351cb8c7226879620a278aeff743be411882de584",
+      "size_bytes": 18007,
       "mode": 420
     },
     {
@@ -454,8 +454,8 @@
     {
       "path": "src/launcher/native_menu.py",
       "source_path": "src/launcher/native_menu.py",
-      "sha256": "a460018e1c97074f04dffba1a886fc7f3018aa15f4b041aba651bab39f993a0d",
-      "size_bytes": 97254,
+      "sha256": "893c70f55b2616a9b4d1d801d8879f7ab33ebc2a81053e8476c7c4cc49604594",
+      "size_bytes": 99556,
       "mode": 420
     },
     {
@@ -517,8 +517,15 @@
     {
       "path": "src/launcher/rogue.py",
       "source_path": "src/launcher/rogue.py",
-      "sha256": "673a502a3d50f43ca99417f768dd0fba1f7257406e42897b3b4148d81465f2bd",
-      "size_bytes": 38177,
+      "sha256": "4a1d1ea6c5bf411bffc8cd699c03a4843e4722a9c730a6cb9de9c24562cb9542",
+      "size_bytes": 43117,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/rogue_difficulty.py",
+      "source_path": "src/launcher/rogue_difficulty.py",
+      "sha256": "465cbc00d1f4c00e6f9f95ec5710dc183760c5745a851cdcfc505c4ef7c7caf3",
+      "size_bytes": 2237,
       "mode": 420
     },
     {
@@ -531,15 +538,29 @@
     {
       "path": "src/launcher/rogue_generator.py",
       "source_path": "src/launcher/rogue_generator.py",
-      "sha256": "b31fed769ddd794292343324fcc3e33a17009c1347943c526e8d6a5e68a6b4f6",
-      "size_bytes": 23707,
+      "sha256": "a76bbc7ba2524966e52365bea0600ee66de4772315977e01867d0ac20b108965",
+      "size_bytes": 24126,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/rogue_goal_hud.py",
+      "source_path": "src/launcher/rogue_goal_hud.py",
+      "sha256": "37966c5b2679b3a80c38e2a84c99b8ba992795b78fff86e4a0b44fe6a98aa12d",
+      "size_bytes": 21840,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/rogue_native_score.py",
+      "source_path": "src/launcher/rogue_native_score.py",
+      "sha256": "f31d5bdf487bed0d0a24d498b439b623a2c4a41acd28d2093775ba86668e4165",
+      "size_bytes": 14245,
       "mode": 420
     },
     {
       "path": "src/launcher/rogue_result_ui.py",
       "source_path": "src/launcher/rogue_result_ui.py",
-      "sha256": "f021d66bf7a6d278bbde125bbf9aae962c12b1d7a05c979d250bf77e13e4ad8b",
-      "size_bytes": 16988,
+      "sha256": "267c4b1c08529babfdd227dc7d3fd8c96a5689c96b1123ddb2a0af41888ba725",
+      "size_bytes": 18232,
       "mode": 420
     },
     {
@@ -552,8 +573,8 @@
     {
       "path": "src/launcher/rogue_rewards_ui.py",
       "source_path": "src/launcher/rogue_rewards_ui.py",
-      "sha256": "53c7bae3d861d2d62ef3ea298359040304a0e67c826eecc0cfecaf47ec82fdc4",
-      "size_bytes": 12441,
+      "sha256": "3b59ce32bd700caf7626d090614cd5393f9318209e345d00ca48cb0b136a34a3",
+      "size_bytes": 14100,
       "mode": 420
     },
     {
@@ -594,8 +615,15 @@
     {
       "path": "src/launcher/rogue_ui.py",
       "source_path": "src/launcher/rogue_ui.py",
-      "sha256": "284bc7ed3554d6f35fefcb89beb7e886dc9ff1f3a32528eb41f01cb748058bfe",
-      "size_bytes": 22285,
+      "sha256": "0df19af3ecb1117867ef64150688e1b684fd925307dce4f2935198bb78f2a9f4",
+      "size_bytes": 31404,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/rogue_victory_music.py",
+      "source_path": "src/launcher/rogue_victory_music.py",
+      "sha256": "88378d2477208f1b9410929ca9b556641b1cf0f2a85be49ebd53252262ba5dc9",
+      "size_bytes": 5208,
       "mode": 420
     },
     {
@@ -608,8 +636,8 @@
     {
       "path": "src/launcher/session_process.py",
       "source_path": "src/launcher/session_process.py",
-      "sha256": "5e23f38337523d67e9211ecd8d23a34206ae14798e1878bbe12831bec6581eeb",
-      "size_bytes": 6742,
+      "sha256": "a6ef63d59b4f63693f40b9d39eb18262dd065e7b7b29fd349c1b4ef842c31308",
+      "size_bytes": 7117,
       "mode": 420
     },
     {
@@ -622,8 +650,22 @@
     {
       "path": "src/launcher/session_settings.py",
       "source_path": "src/launcher/session_settings.py",
-      "sha256": "739a4b94882c8f4100366c99d860c22d3f22ab14efcf2db817893ffb4ef9d479",
-      "size_bytes": 1236,
+      "sha256": "00b27288ad2cf32d49cea62a95716b399f0e4e0edeaad9b188fca5e5cc9909f8",
+      "size_bytes": 1334,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/settings_help.py",
+      "source_path": "src/launcher/settings_help.py",
+      "sha256": "bdf959667b6a043dfa46d9642f79969d139ceee307c19e367a4ebcb62b613142",
+      "size_bytes": 19597,
+      "mode": 420
+    },
+    {
+      "path": "src/launcher/speed_camera.py",
+      "source_path": "src/launcher/speed_camera.py",
+      "sha256": "f085943d7eae9a6930ea33a3928765f0afa75482ba95aa9afcf1875f75ad6ba0",
+      "size_bytes": 2640,
       "mode": 420
     },
     {
@@ -643,15 +685,15 @@
     {
       "path": "src/launcher/ui_render.py",
       "source_path": "src/launcher/ui_render.py",
-      "sha256": "f1cee2c2de72676659727848a66eee48d16f8648095dc6ba2a97ee1ebbc4ee91",
-      "size_bytes": 37719,
+      "sha256": "7478a2363fd8820de6099fd2a2af3e9087d69ef57329a5e9745c1e261d9e667a",
+      "size_bytes": 38764,
       "mode": 420
     },
     {
       "path": "src/launcher/window.py",
       "source_path": "src/launcher/window.py",
-      "sha256": "fe4ec0f398bafec9cdc77e4d7e63a10737b1c3bb7027838cbd637c7043acb467",
-      "size_bytes": 94177,
+      "sha256": "75b030b8d6d0ec9240816bd57b56a4f0fb1a4ec0fde919e80f1eec50df1b1792",
+      "size_bytes": 95926,
       "mode": 420
     },
     {
@@ -783,8 +825,15 @@
     {
       "path": "tests/test_rogue_variety.py",
       "source_path": "tests/public_rogue_variety.py",
-      "sha256": "a74f167291657ef3dc851170b8b5a4bdab86b95b19553a43bde2818938e6f240",
-      "size_bytes": 6570,
+      "sha256": "3c5ee29871717f45b9a5f59ff72806385d9054531f16dea599a5523979feda20",
+      "size_bytes": 6954,
+      "mode": 420
+    },
+    {
+      "path": "tests/test_rogue_victory_music.py",
+      "source_path": "tests/test_rogue_victory_music.py",
+      "sha256": "0fd1038c75363f2f582708a897edb21cab9b961befc5008e2eb1ad54e6209d37",
+      "size_bytes": 7347,
       "mode": 420
     },
     {

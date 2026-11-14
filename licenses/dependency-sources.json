@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "review_date": "2026-11-03",
-  "status": "Security V2 exact runtime mapping and source/notice inventory verified; publication and legal approval pending.",
+  "review_date": "2026-11-14",
+  "status": "Exact dependency materials retained from preview 2; preview 3 runtime and archived sources verified",
   "legal_approval": false,
   "signature_verification": false,
   "components": [
@@ -4826,7 +4826,7 @@
     }
   ],
   "unknowns": [
-    "Recipient access to the matching V2 runtime, application sources and dependency-source companion awaits publication; withdrawn V1 remains historical.",
+    "Recipient access is verified after publication; the preview 1 withdrawal remains historical.",
     "Original Pillow wheel cache build image and auditwheel transformation were not reproduced; source/build-origin limits remain.",
     "One exact shared-library replacement does not certify every ABI/hardware path, physical Steam Deck acceptance or complete licensing approval."
   ],
@@ -4877,12 +4877,12 @@
     "No vulnerability PoC executed and no user Steam/game/runtime opened."
   ],
   "replacement_evidence": {
-    "candidate_archive_sha256": "72c1124a647fad0f7d03a1612aac6d9bda5deebd0e172ad9a6e541c1e851d28f",
-    "candidate_archive_bytes": 46218949,
-    "candidate_executable_sha256": "6dfa64afe517b77adbe5c75ef8e04d907b42beb611535fef38570ae576a2e281",
+    "candidate_archive_sha256": "813fba0308aee063318ef5e3c87d9323a170e3464ba39b8aa32aefb788aff9d2",
+    "candidate_archive_bytes": 46291488,
+    "candidate_executable_sha256": "2f8494fdc70c2bb5f2dcad8865ebffb54df74c1bc7ddc12801bc62ba470e55ed",
     "original_alsa_sha256": "0faa79c7a37189b9efcd9bff5874cd1af1c05b0cc66831733087d84cbe87e811",
     "replacement_alsa_sha256": "ff4c69ef420f2d0ab92c813d2222d097c6a7eafe3b13952aed069e2bb0204f55",
-    "replacement_origin": "Existing Ubuntu libasound1.2.11 library; not rebuilt or selected for distribution",
+    "replacement_origin": "Ubuntu ALSA 1.2.11 alternate from the verified preview.2 replacement fixture",
     "cli_help_returncode": 0,
     "observed": {
       "alsa_version": "1.2.11",
@@ -4891,22 +4891,22 @@
       "sdl_quit": true,
       "mapped_files": [
         {
-          "file_name": "libasound.so.2",
-          "sha256": "ff4c69ef420f2d0ab92c813d2222d097c6a7eafe3b13952aed069e2bb0204f55"
+          "sha256": "ff4c69ef420f2d0ab92c813d2222d097c6a7eafe3b13952aed069e2bb0204f55",
+          "path": "_internal/libasound.so.2"
         }
       ]
     },
     "clone_changed_files": [
       "_internal/libasound.so.2"
     ],
-    "candidate_tree_and_modes_unchanged": true,
     "candidate_modified": false,
     "sdk_modified": false,
     "game": false,
     "window": false,
     "audio_device": false,
-    "limits": "One compatible shared-library replacement in a disposable V2 copy. Informational CLI, ALSA version, SDL_Init(0)/Quit and actual mapped-byte hash only; not all ABI/hardware paths or physical Deck acceptance.",
-    "independent_receipt_sha256": "9beec0c4d360ebc12cf1dc353f2df00f3a2f246949d05dc27c5e2b62d8fc25c5"
+    "limits": "One compatible shared-library replacement in a disposable Linux copy. Informational CLI, SDL_Init(0) and mapped identity; no ABI coverage for other libraries or physical Deck acceptance.",
+    "independent_receipt_sha256": "7365fdaeac4dd5c84a870a746eba2df7ba7f99023114bf8cf5fe529594d783af",
+    "checked_utc": "2026-11-14T15:01:42.474312+00:00"
   },
   "historical_reference": {
     "candidate_archive_sha256": "851f8e2d9c7d87ad81e53aede854f39d4e7bbd349fff0e05d5b05d309d8ee265",
@@ -10159,7 +10159,7 @@
       ]
     }
   },
-  "candidate_archive_sha256": "72c1124a647fad0f7d03a1612aac6d9bda5deebd0e172ad9a6e541c1e851d28f",
+  "candidate_archive_sha256": "813fba0308aee063318ef5e3c87d9323a170e3464ba39b8aa32aefb788aff9d2",
   "runtime_files": [
     {
       "path": "_internal/PIL/_avif.cpython-313-x86_64-linux-gnu.so",
@@ -13434,8 +13434,8 @@
     },
     {
       "path": "ac-deck",
-      "sha256": "6dfa64afe517b77adbe5c75ef8e04d907b42beb611535fef38570ae576a2e281",
-      "size_bytes": 3428088,
+      "sha256": "2f8494fdc70c2bb5f2dcad8865ebffb54df74c1bc7ddc12801bc62ba470e55ed",
+      "size_bytes": 3498216,
       "needed": [
         "libdl.so.2",
         "libz.so.1",
@@ -13452,13 +13452,13 @@
         "2.14"
       ],
       "origin_kind": "Generated PyInstaller bootloader and frozen ac-deck application",
-      "origin_evidence": "security V2 build/package/compiled verification; application source map is in build-info.json",
+      "origin_evidence": "Preview 3 compiled verification and frozen application source inventory",
       "component_refs": [
         "build-tool:pyinstaller"
       ]
     }
   ],
-  "runtime_inventory_status": "Actual security V2 archive independently classified: 135 ELF files, 90 exact new SDK origins, 38 Ubuntu references, six selected native references and one generated executable; no unknown origin.",
+  "runtime_inventory_status": "Preview 3 has 135 mapped ELF files. All 134 dependency ELFs match preview 2; the generated application changed.",
   "sdk_build": {
     "python": "3.13.5",
     "configuration": "'--prefix=$SDK_PREFIX' '--enable-shared' '--without-static-libpython' '--with-ensurepip=install' '--without-readline' '--with-pkg-config=no' '--with-system-libmpdec=no' '--with-openssl=$SDK_PREFIX' '--with-openssl-rpath=no' 'CC=gcc' 'CFLAGS=-O2 -fPIC' 'LDFLAGS=-L$SDK_PREFIX/lib -Wl,-rpath,$SDK_PREFIX/lib' 'CPPFLAGS=-I$SDK_PREFIX/include' 'LIBFFI_CFLAGS=-I$SDK_PREFIX/include' 'LIBFFI_LIBS=$SDK_PREFIX/lib/libffi.a' 'LIBSQLITE3_CFLAGS=-I$SDK_PREFIX/include' 'LIBSQLITE3_LIBS=$SDK_PREFIX/lib/libsqlite3.a -lm' 'ZLIB_CFLAGS=-I$SDK_PREFIX/include' 'ZLIB_LIBS=$SDK_PREFIX/lib/libz.a' 'BZIP2_CFLAGS=-I$SDK_PREFIX/include' 'BZIP2_LIBS=$SDK_PREFIX/lib/libbz2.a' 'LIBLZMA_CFLAGS=-I$SDK_PREFIX/include' 'LIBLZMA_LIBS=$SDK_PREFIX/lib/liblzma.a'",
@@ -15192,9 +15192,9 @@
     "wheel_in_source_bundle": false,
     "scope": "Exact official Pillow13 wheel and installed SDK members reviewed; original cache build and auditwheel transform not reproduced."
   },
-  "candidate_archive_size_bytes": 46218949,
+  "candidate_archive_size_bytes": 46291488,
   "candidate_archive_name": "ac-deck-linux-x86_64.tar.gz",
-  "candidate_runtime_manifest_sha256": "24c9ce8516a00b1cb2c4e95689733798fa63c2fb9a4a3bc293e7f6d5b5e32eff",
+  "candidate_runtime_manifest_sha256": "81cd4887e172e3f6dbdc408abfe1088cc262895a479960d7fe5e3f0af1a5c880",
   "runtime_inventory_evidence": {
     "elf_files": 135,
     "max_glibc": "2.38",
@@ -15205,17 +15205,16 @@
       "Generated PyInstaller bootloader and frozen ac-deck application": 1
     },
     "unknown_elf_files": 0,
-    "scan_method": "SHA-256/size plus readelf -W -h -d -V; no binary execution",
-    "independent_inventory_sha256": "2aba6f4431fcba5cfa1cffd04dd024964eee4431a9b6c3d8456da32dbcd7643a",
-    "completed_build_inventory_sha256": "9180d4084444df2e80e4227ad4585c16a4d1e622dfc707bc37484eab08b30690",
-    "cycle_summary_sha256": "4667b055768f5ac6d79f7fc73e6d24162fb10b7d32d8d57109a31993282bcf28",
-    "compiled_receipt_sha256": "1eb2d5f1f131c215b7dd939a586e3b48936538df12624ce78fbd394cf09eb44f",
-    "compiled_tests": 130,
+    "scan_method": "Versioned compiled verifier with readelf/ldd and independent SHA-256 and size comparison to preview 2",
+    "completed_build_inventory_sha256": "8d08062ffcdb6df8ea7279fcb88fc545d1c8ec0e7e09260e5f074997eeef75aa",
+    "compiled_receipt_sha256": "313a844a06f398ca7703bf1df516176dd21f7aeae0e21103f030b71ed75081d5",
+    "compiled_tests": 139,
     "compiled_skips": 0,
     "source_product_imports": 0,
     "offscreen_images": 10,
     "physical_deck": false,
-    "accepted": false
+    "accepted": false,
+    "unchanged_reviewed_dependency_elf_files": 134
   },
   "published": false,
   "setuptools_wheel_proof": {
@@ -15236,10 +15235,10 @@
     "private_full_suite_sha256": "7c950bc8fe2e8706e01849d3862cb26e2fed549197e903b49a79e74354568611"
   },
   "runtime_python_evidence": {
-    "executable_sha256": "6dfa64afe517b77adbe5c75ef8e04d907b42beb611535fef38570ae576a2e281",
+    "executable_sha256": "2f8494fdc70c2bb5f2dcad8865ebffb54df74c1bc7ddc12801bc62ba470e55ed",
     "archived_pillow": "13.0.0",
-    "pyz_module_count": 344,
-    "pyz_module_list_sha256": "a8ac1d16c7bab40ebccde961d556eacac74599294238165bbdebd72270407352",
+    "pyz_module_count": 351,
+    "pyz_module_list_sha256": "22a7d03f7c57db269d75930f2a029e43eaa0b37c0f091ad98588874ce2dd5e36",
     "excluded_build_vendor_roots": [
       "setuptools",
       "autocommand",
@@ -15249,12 +15248,11 @@
       "pkg_resources"
     ],
     "found_build_vendor_modules": [],
-    "base_library_sha256": "b65b4c15f57c95a0912d89d4d23eb15a231d4d3b7ad7a6946d6b0a56e024d94d",
+    "base_library_sha256": "88dc0f4b9e32637af16c09bb62a333f45471220cfebadf287446235dea9b056e",
     "base_library_file_count": 154,
     "base_library_vendor_files": [],
     "external_vendor_code_files": [],
     "limit": "Archived Python module/file inventory, separate from native ELF and complete licensing review",
-    "receipt_sha256": "063e893dd0eb7b283147802e1ea76af91ee6b57e9aa2215aa48ab8c1eb81a1ce",
-    "independent_review_sha256": "dd0759baead52687001009e49260d5b619370d0ed5740c147e9cf1945c286235"
+    "pyz_module_list_format": "Sorted module names separated by LF with trailing LF."
   }
 }

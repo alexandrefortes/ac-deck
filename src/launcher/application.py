@@ -18,7 +18,7 @@ from . import package_setup, steam
 from . import file_io as safe
 from src.launcher import content, csp, installed, diagnostics, font_support, graphics, chase_camera, hud_cleanup, gt5_camera, bacc_camera, event_synthetizer, player_history, results, campaigns
 from src.launcher import driving_haptics, driving_haptics_app, gamepad_fx, current_settings, session_settings, session_process, history_retention, proximity_alert, proximity_preferences
-from src.launcher import rogue_toasty_session, rogue_toasty_install
+from src.launcher import rogue_goal_hud, rogue_toasty_session, rogue_toasty_install, rogue_victory_music
 
 
 def _rogue_selection(game, path, selection):
@@ -43,13 +43,15 @@ def _rogue_selection(game, path, selection):
     return store,chosen,catalog
 
 
-def _finish_rogue_attempt(active, record, *, trace=None):
+def _finish_rogue_attempt(active, record, *, trace=None, on_win=None):
     """O recibo do núcleo evita reaplicar XP mesmo se a finalização for repetida."""
     if active is None:return ''
     store,attempt=active
     try:
         update=store.finish_attempt(attempt['id'],record)
         if trace:trace('rogue_result',outcome=update['status'])
+        if on_win is not None and update['status']=='won':
+            on_win(attempt['id'])
         return ' Rogue: '+update['message']
     except (OSError,ValueError,RuntimeError):
         if trace:trace('rogue_result',outcome='unavailable')
@@ -223,6 +225,8 @@ def launch(package,command,*,csp_payload=None,csp_config=None,game_config=None,t
         active_process=None
         active_haptics=None
         active_toasty=None
+        active_rogue_hud=None
+        victory_music=rogue_victory_music.Playback(ROOT/'assets/rogue-victory')
         active_proximity=None
         pending_proximity={}
         lifecycle_lock=threading.RLock()
@@ -234,7 +238,9 @@ def launch(package,command,*,csp_payload=None,csp_config=None,game_config=None,t
             # The close worker cannot race config preparation or finalization.
             if not lifecycle_lock.acquire(blocking=False):return
             try:
-                if active_process is not None:active_process.request_stop()
+                if active_process is not None:
+                    stop_rogue_hud()
+                    active_process.request_stop()
             finally:lifecycle_lock.release()
         def stalled_close():
             if not lifecycle_lock.acquire(blocking=False):return False
@@ -265,6 +271,17 @@ def launch(package,command,*,csp_payload=None,csp_config=None,game_config=None,t
                     if trace:trace('rogue_toasty_finished')
                 except (OSError,ValueError,RuntimeError):
                     if trace:trace('rogue_toasty_unavailable',reason='close_failed')
+        def stop_rogue_hud():
+            nonlocal active_rogue_hud
+            current,active_rogue_hud=active_rogue_hud,None
+            if current is not None:
+                victory_music.stop()
+                try:current.close()
+                except OSError:
+                    if trace:trace('rogue_goal_hud_unavailable',reason='close_failed')
+        def rogue_hud_audio(action):
+            if action=='win' and active_process is not None:victory_music.play()
+            elif action=='restart':victory_music.stop()
         def tick_haptics(window):
             with lifecycle_lock:return tick_session(window)
         def tick_session(window):
@@ -276,6 +293,11 @@ def launch(package,command,*,csp_payload=None,csp_config=None,game_config=None,t
                 except (OSError,ValueError,RuntimeError):
                     stop_toasty()
                     if trace:trace('rogue_toasty_unavailable',reason='runtime_error')
+            if active_process is not None and active_rogue_hud is not None:
+                try:active_rogue_hud.tick()
+                except OSError:
+                    stop_rogue_hud()
+                    if trace:trace('rogue_goal_hud_unavailable',reason='runtime_error')
             if active_process is None and active_haptics is not None:
                 stop_haptics()
             if active_haptics is not None:
@@ -291,6 +313,7 @@ def launch(package,command,*,csp_payload=None,csp_config=None,game_config=None,t
             nonlocal active_result,active_process,active_campaign,campaign_unavailable,active_rogue,active_proximity
             stop_haptics()
             stop_toasty()
+            stop_rogue_hud()
             if active_proximity is not None:
                 edits=proximity_preferences.read_edits(roots, last_selection.get('proximity_handled_session'))
                 if edits.get('proximity_handled_session') == active_proximity:
@@ -332,7 +355,7 @@ def launch(package,command,*,csp_payload=None,csp_config=None,game_config=None,t
                         }.get(update['reason'],'Campaign progress kept.')
                     except (OSError,ValueError,RuntimeError):
                         campaign_note=' Native campaign progress could not be saved; original progress kept.'
-                rogue_note=_finish_rogue_attempt(rogue_attempt,record,trace=trace)
+                rogue_note=_finish_rogue_attempt(rogue_attempt,record,trace=trace,on_win=victory_music.arm_result)
                 return results.message(record)+campaign_note+rogue_note
             except (OSError,ValueError,RuntimeError):
                 rogue_note=_finish_rogue_attempt(rogue_attempt,dict(schema_version=1,
@@ -349,20 +372,27 @@ def launch(package,command,*,csp_payload=None,csp_config=None,game_config=None,t
             safe.write_new_json(temporary,chosen)
             temporary.replace(saved)
         def start(chosen):
-            with lifecycle_lock:return start_locked(chosen)
+            with lifecycle_lock:
+                try:return start_locked(chosen)
+                except BaseException:
+                    if active_process is None:stop_rogue_hud()
+                    raise
         def start_locked(chosen):
             nonlocal catalog,active_result,active_process,active_haptics,active_campaign,campaign_unavailable,active_rogue,active_toasty,active_proximity
+            nonlocal active_rogue_hud
             # O loop da janela também bloqueia a ação. Esta guarda preserva a
             # sessão e seu coletor caso outro chamador tente iniciar de novo.
             if active_process is not None:
                 raise ValueError('Finish the current session before starting another.')
+            victory_music.stop()
+            victory_music.arm_result(None)
             chosen=dict(chosen)
             rogue_store=None
             rogue_marker=chosen.get('rogue')
             proposal=chosen.pop(event_synthetizer.MARKER,None)
             if 'rogue' in chosen:
                 if proposal is not None:
-                    raise ValueError('A session cannot combine Rogue and Event Synthetizer proposals')
+                    raise ValueError('A session cannot combine Rogue and Race Synthetizer proposals')
                 rogue_store,chosen,catalog=_rogue_selection(game,state/'rogue.json',chosen)
             elif proposal is not None:
                 catalog=event_synthetizer.validate(game,proposal)
@@ -391,14 +421,23 @@ def launch(package,command,*,csp_payload=None,csp_config=None,game_config=None,t
             camera_receipt=None
             if chosen.get('chase_camera')==chase_camera.SCRIPT:
                 camera_receipt=chase_camera.install(package)
+            elif chosen.get('chase_camera')==chase_camera.SPEED:
+                camera_receipt=chase_camera.install(package, chase_camera.SPEED)
             elif chosen.get('chase_camera')==chase_camera.GT5:
                 camera_receipt=gt5_camera.install(ROOT/'mods'/gt5_camera.ARCHIVE_NAME,package)
             elif chosen.get('chase_camera') in chase_camera.BACC:
                 mode=chosen['chase_camera']
                 camera_receipt=bacc_camera.install(ROOT/'mods'/bacc_camera.SPECS[mode]['archive'],package,mode)
             history_retention.maintain_locked(package,reserve=1)
+            if rogue_store is not None:
+                try:
+                    rogue_goal_hud.install(game)
+                    active_rogue_hud=rogue_goal_hud.Session(history.name,on_audio=rogue_hud_audio)
+                except (OSError,ValueError,RuntimeError):
+                    if trace:trace('rogue_goal_hud_unavailable',reason='preparation_failed')
             hashes=content.write_session(game,catalog,chosen,history,csp=True,
-                cfg=cfg,base_cfg=base_cfg,xinput=direct)
+                cfg=cfg,base_cfg=base_cfg,xinput=direct,
+                rogue_hud=active_rogue_hud.config if active_rogue_hud is not None else None)
             csp_files=csp.write_settings(csp_plan,history)
             haptics_ready=False
             if chosen.get('driving_haptics',driving_haptics.DEFAULTS['driving_haptics']):
@@ -456,6 +495,11 @@ def launch(package,command,*,csp_payload=None,csp_config=None,game_config=None,t
                     safe.write_new_json(history/'rogue-attempt.json',dict(schema_version=1,
                         run_id=attempt['run_id'],challenge_id=attempt['challenge_id'],
                         attempt_id=attempt['id'],session_id=history.name))
+                    if active_rogue_hud is not None:
+                        try:active_rogue_hud.set_attempt(attempt)
+                        except (KeyError,ValueError):
+                            stop_rogue_hud()
+                            if trace:trace('rogue_goal_hud_unavailable',reason='invalid_objective')
                     metadata=dict(run_id=attempt['run_id'],challenge_id=attempt['challenge_id'],
                                   attempt_id=attempt['id'],session_id=history.name)
                     try:
@@ -488,6 +532,10 @@ def launch(package,command,*,csp_payload=None,csp_config=None,game_config=None,t
                 active_rogue=None
                 raise
             active_process=session_process.Session(process,before,trace=trace)
+            if active_rogue_hud is not None:
+                try:active_rogue_hud.start_native_score(game/'acs.exe',active_process,trace=trace)
+                except (OSError,ValueError,RuntimeError):
+                    if trace:trace('rogue_native_score_unavailable',reason='preparation_failed')
             active_proximity=proximity_session
             return active_process
         proton=next((v for v in command if Path(v).name=='proton'),None)
@@ -498,11 +546,14 @@ def launch(package,command,*,csp_payload=None,csp_config=None,game_config=None,t
         try:
             chosen=run(catalog,selection,start,proton=proton,csp=True,game=game,trace=trace,
                        synthesis_store=state/'event-synthetizer.json',on_exit=finish,menu_class=partial(NativeMenu,campaign_cfg=cfg,
-                       current_provider=lambda: current_settings.read(cfg,base_cfg,roots,aga_supported=gamepad_fx.supported(game))),on_tick=tick_haptics,
+                       current_provider=lambda: current_settings.read(cfg,base_cfg,roots,aga_supported=gamepad_fx.supported(game)),
+                       rogue_victory_music=victory_music),on_tick=tick_haptics,
                        on_stop=stop_session,on_stalled=stalled_close,on_selection=remember,
                        on_session_preferences=take_proximity)
         finally:
             stop_haptics()
+            stop_rogue_hud()
+            victory_music.stop()
             if active_process is not None:
                 active_process.request_stop()
                 while (code:=active_process.poll()) is None:time.sleep(0.05)
@@ -552,6 +603,7 @@ def main(argv=None):
     fonts.add_argument('--prefixo',type=Path,required=True,help='Mesmo STEAM_COMPAT_DATA_PATH usado pela entrada Steam')
     camera=sub.add_parser('chase-camera-restore',help='Remove só o script autoral de câmera, com jogo/menu fechados')
     camera.add_argument('--pacote',type=Path,required=True)
+    camera.add_argument('--speed',action='store_true',help='Remove a Speed Chase em vez da CSP Adjustable')
     gt5=sub.add_parser('gt5-camera-info',help='Confere o mod GT5 incluído, sem instalar ou executar')
     gt5.add_argument('--zip',dest='archive',type=Path)
     gt5restore=sub.add_parser('gt5-camera-restore',help='Remove só a câmera GT5 gerida, com jogo/menu fechados')
@@ -601,7 +653,9 @@ def main(argv=None):
             print(json.dumps(font_support.restore(args.pacote,
                 {'STEAM_COMPAT_DATA_PATH':str(args.prefixo)}),ensure_ascii=False))
         elif args.action=='chase-camera-restore':
-            print(json.dumps(chase_camera.restore(args.pacote),ensure_ascii=False))
+            restored=(chase_camera.restore(args.pacote, chase_camera.SPEED) if args.speed
+                      else chase_camera.restore(args.pacote))
+            print(json.dumps(restored,ensure_ascii=False))
         elif args.action=='gt5-camera-info':
             print(json.dumps(gt5_camera.inspect(args.archive or ROOT/'mods'/gt5_camera.ARCHIVE_NAME),ensure_ascii=False))
         elif args.action=='bacc-camera-info':

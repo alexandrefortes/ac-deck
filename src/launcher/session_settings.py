@@ -3,11 +3,12 @@ from copy import deepcopy
 
 
 # Lista positiva: uma preferência nova não muda a identidade de corridas salvas.
-# Controles, assistências e comportamento da IA são preferências atuais do
-# piloto em todos os modos, assim como vídeo, câmera, interface e hápticos.
+# Controles, assistências e comportamento CSP da IA são preferências atuais do
+# piloto, assim como vídeo, câmera, interface e hápticos. A agressividade nativa
+# gravada pelo Rogue pertence à corrida e não se propaga entre modos.
 RACE_FIELDS = (
     'car', 'skin', 'track', 'layout', 'event', 'mode', 'laps', 'minutes',
-    'opponents', 'ai', 'weather', 'time_minutes', 'session_date',
+    'opponents', 'ai', 'ai_aggression', 'weather', 'time_minutes', 'session_date',
 )
 
 

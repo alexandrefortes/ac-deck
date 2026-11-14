@@ -1,4 +1,31 @@
-# Security review for v0.1.0-preview.2
+# Community preview security review
+
+## Preview 3 advisory recheck
+
+The 14 November 2026 query of GitHub-reviewed pip advisories found zero
+matches for the same six exact pins listed below. The historical controls
+matched 56 Pillow 12.2.0 advisories and one setuptools 84.0.0 advisory.
+The release asset `security-review-six-pins.json` records aliases,
+pagination, advisory IDs and the requirements hash.
+
+SteamOS 3.9.5 Stable revoked the compromised eMudhra CAs. Update SteamOS and
+its system certificates before downloading the installer. Use the official
+Stable channel and its default trust store. The wrapper checks the version
+on detected SteamOS. Custom trust stores need equivalent distrust.
+The packaged CPython 3.13.5 lacks the built-in defense added by 3.13.18.
+The installer's archive reader verifies the fixed checksum, then accepts
+regular files through its own extraction code.
+
+The package retains OpenSSL 3.0.16. Current upstream high severity
+advisories for that version require DTLS, CMS or PKCS#7 operations, which the
+reviewed product paths do not use. This review covers the stated paths and
+versions. Physical trust stores and actual Deck operation remain untested.
+
+Sources: [Valve SteamOS 3.9.5 announcement](https://steamcommunity.com/games/1675200/announcements/detail/694275728822244964),
+[CPython 3.13.18 security release](https://www.python.org/downloads/release/python-31318/),
+[OpenSSL 3.0 advisories](https://openssl-library.org/news/vulnerabilities-3.0/).
+
+## Preview 2 historical review
 
 Preview 1 was withdrawn on 3 November 2026 after confirmed dependency
 advisories. Its tag and original artifacts are preserved; they are not the

@@ -16,8 +16,10 @@ import sys
 import uuid
 
 from . import file_io as safe
+from . import speed_camera
 
 SCRIPT = 'old_man_adjustable'
+SPEED = speed_camera.SCRIPT
 GT5 = 'spec 2.0'
 BACC_UNBOUND = 'BACC - NFS Unbound'
 BACC_GT = 'BACC - GT'
@@ -34,6 +36,7 @@ MODES = {
     'drone': 'CSP Drone',
     BACC_UNBOUND: 'BACC - NFS Unbound',
     BACC_GT: 'BACC - GT',
+    SPEED: 'Speed Chase (CSP)',
 }
 LOOK = {'right': 'Right stick', 'disabled': 'Disabled'}
 DEADZONES = (0.03, 0.05, 0.1, 0.15, 0.2)
@@ -154,6 +157,8 @@ def ranges(mode):
 
 
 def geometry_defaults(mode):
+    if mode == SPEED:
+        return dict(speed_camera.GEOMETRY)
     return (dict(chase_distance=2.8, chase_height=1.3, chase_pitch=3.4)
             if mode in BACC else {key: DEFAULTS[key] for key in GEOMETRY})
 
@@ -175,11 +180,11 @@ def switch_style(selection, mode):
         return
     bank = {key: dict(value) for key, value in selection.get('chase_presets', {}).items()}
     defaults = geometry_defaults(current)
-    if 'chase_presets' not in selection and current not in BACC:
+    if 'chase_presets' not in selection and current not in (*BACC, SPEED):
         # Antes da 036 todos os estilos antigos compartilhavam estes campos.
         # Conservar a preferência herdada; apenas os BACC novos usam 2.8/1.3/3.4.
         legacy = {key: selection.get(key, defaults[key]) for key in GEOMETRY}
-        bank = {old: dict(legacy) for old in MODES if old not in BACC}
+        bank = {old: dict(legacy) for old in MODES if old not in (*BACC, SPEED)}
     bank[current] = {key: selection.get(key, defaults[key]) for key in GEOMETRY}
     destination = bank.get(mode, geometry_defaults(mode))
     candidate = dict(selection, **destination, chase_camera=mode, chase_presets=bank)
@@ -217,7 +222,7 @@ def script_settings(selection):
     """
     validate(selection)
     mode = selection.get('chase_camera')
-    if mode not in (SCRIPT, GT5, *BACC):
+    if mode not in (SCRIPT, GT5, SPEED, *BACC):
         return {}
     defaults = dict(DEFAULTS, **geometry_defaults(mode))
     values = {field: format(selection.get(key, defaults[key]), '.2f')
@@ -226,31 +231,38 @@ def script_settings(selection):
             for folder in ('chaser_camera', 'chaser_camera_2')}
 
 
-def assets():
+def assets(mode=SCRIPT):
     """Três arquivos autorais para uma pasta nova de implementação CSP."""
+    if mode == SCRIPT:
+        camera, settings, manifest = CAMERA_LUA, SETTINGS_INI, MANIFEST_INI
+    elif mode == SPEED:
+        camera, settings, manifest = speed_camera.CAMERA_LUA, speed_camera.SETTINGS_INI, speed_camera.MANIFEST_INI
+    else:
+        raise ValueError('Unknown managed chase camera')
     return [dict(path=name, data=raw.encode('utf-8'),
                  sha256=hashlib.sha256(raw.encode('utf-8')).hexdigest())
-            for name, raw in (('camera.lua', CAMERA_LUA), ('settings.ini', SETTINGS_INI),
-                              ('manifest.ini', MANIFEST_INI))]
+            for name, raw in (('camera.lua', camera), ('settings.ini', settings),
+                              ('manifest.ini', manifest))]
 
 
 def _digest(path):
     return safe.hash_reference_file(Path(path))[0]
 
 
-def _context(package):
+def _context(package, mode):
     from . import installed
     package = safe.source_root(package)
     game = installed.game_path(package, safe.read_json(package/'prepared.json'))
-    folder = game/'extension/lua/chaser-camera'/SCRIPT
-    receipt = package/'launcher/chase-camera.json'
+    folder = game/'extension/lua/chaser-camera'/mode
+    receipt = package/'launcher'/('chase-camera.json' if mode == SCRIPT else 'speed-chase-camera.json')
     safe.check_components(folder)
     safe.check_components(receipt)
     return folder, receipt
 
 
-def _expected(folder, rows):
-    return dict(schema_version=1, implementation=SCRIPT, csp_version=VERIFIED_CSP_VERSION,
+def _expected(folder, rows, mode):
+    version = VERIFIED_CSP_VERSION if mode == SCRIPT else speed_camera.CSP_VERSION
+    return dict(schema_version=1, implementation=mode, csp_version=version,
                 folder=str(folder), files=[dict(path=r['path'], sha256=r['sha256']) for r in rows])
 
 
@@ -275,11 +287,11 @@ def _save(receipt, data):
     temporary.replace(receipt)
 
 
-def install(package):
+def install(package, mode=SCRIPT):
     """Adicionar apenas a pasta autoral; chamar sob a trava de lançamento."""
-    rows = assets()
-    folder, receipt = _context(package)
-    expected = _expected(folder, rows)
+    rows = assets(mode)
+    folder, receipt = _context(package, mode)
+    expected = _expected(folder, rows, mode)
     if receipt.exists():
         previous = _read(receipt, expected)
         if previous['status'] == 'ready':
@@ -326,10 +338,10 @@ def install(package):
     return data
 
 
-def _restore(package):
-    rows = assets()
-    folder, receipt = _context(package)
-    data = _read(receipt, _expected(folder, rows))
+def _restore(package, mode):
+    rows = assets(mode)
+    folder, receipt = _context(package, mode)
+    data = _read(receipt, _expected(folder, rows, mode))
     if data['status'] == 'restored':
         return data
     present = []
@@ -351,13 +363,13 @@ def _restore(package):
     return data
 
 
-def restore(package):
+def restore(package, mode=SCRIPT):
     """Jogo/menu fechados. Preservar arquivos estranhos e originais do CSP."""
     package = safe.source_root(package)
     lock = package/'launcher/active.lock'
     safe.check_components(lock)
     if sys.platform != 'linux' or not lock.exists():
-        return _restore(package)
+        return _restore(package, mode)
     import fcntl
     with lock.open('r+b') as stream:
         safe.require_reference(os.fstat(stream.fileno()), lock)
@@ -365,4 +377,4 @@ def restore(package):
             fcntl.flock(stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError as error:
             raise ValueError('Close this launcher before restoring its chase camera') from error
-        return _restore(package)
+        return _restore(package, mode)

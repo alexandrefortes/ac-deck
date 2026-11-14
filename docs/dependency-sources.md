@@ -1,15 +1,15 @@
 # Dependency sources and notices
 
 Download the matching source companion and checksums from
-[v0.1.0-preview.2](https://github.com/alexandrefortes/ac-deck/releases/tag/v0.1.0-preview.2).
+[v0.1.0-preview.3](https://github.com/alexandrefortes/ac-deck/releases/tag/v0.1.0-preview.3).
 The source tag supplies corresponding ac-deck application code. No private
 repository, developer account or paid download is needed for this release
 material. Installing the launcher does not require building it.
 
 | Material | Identity |
 | --- | --- |
-| `ac-deck-dependency-sources.tar.gz` | 389623637 bytes; SHA-256 `89bebd9e5ec368b4cd5f482a83c9ad5b5720029aef3bbd4bfeaf6f95860515a0` |
-| [Pinned inventory](../licenses/dependency-sources.json) | SHA-256 `cd3a95e54ba6fc9be5716f8ced932490e55e964a6f1df1e96ef521971931909a`; 69 components and 278 files |
+| `ac-deck-dependency-sources.tar.gz` | 389623756 bytes; SHA-256 `786a625cb49bcc50074589bd4ab39ba8f472b466682b6a336b1f7a71dc8ececd` |
+| [Pinned inventory](../licenses/dependency-sources.json) | SHA-256 `e3f077bf1015f5d528db42e15943b9385f70143e16ed1770a59ca74aca9c28ee`; 69 components and 278 files |
 | Dependency notices | 103 original files under `licenses/dependency-notices/`, copied into runtime `licenses/sdk/` |
 
 Preview 1 was withdrawn; its preserved [review](../archive/dependency-license-review-v0.1.0-preview.1.md)
